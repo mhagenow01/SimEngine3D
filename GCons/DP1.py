@@ -2,7 +2,7 @@
 """
 
 import numpy as np
-from Utilities.kinematic_identities import A_from_p
+from Utilities.kinematic_identities import A_from_p,B_from_p
 
 class DP1:
     def __init__(self,i,a_bar_i,j,a_bar_j,f_t):
