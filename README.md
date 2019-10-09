@@ -1,6 +1,12 @@
 # SimEngine3D
 ### Created by Mike Hagenow as part of ME751
 
+## Dependecies
+* Python >3.5
+* Numpy
+
+## System Overview
+
 The intent of the system will be to read parameters from the included *.adm file and called through simEngine3D.py. Currently, this functionality is in progress, but will likely be fully implemented when we move to the kinematic/dynamics engine.
 
 ## HW 5 - Testing Gcons
