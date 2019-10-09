@@ -28,7 +28,6 @@ class DP1:
 
     def phi(self):
         # Returns the value of the actual constraint expression (scalar)
-        return A_from_p(self.i.p)
         return (self.a_bar_i.transpose() @ A_from_p(self.i.p).transpose() @ (A_from_p(self.j.p) @ self.a_bar_j) - self.f_t)[0][0]
 
     def nu(self):
@@ -37,7 +36,7 @@ class DP1:
 
     def gamma(self):
         # Returns the RHS of the acceleration expression (scalar)
-        return (-self.a_bar_i.transpose() @ B_from_p(self.j.p_dot,self.a_bar_j) @ self.j.p_dot-self.a_bar_j.transpose() @\
+        return (-self.a_bar_i.reshape((1, 3)) @ B_from_p(self.j.p_dot, self.a_bar_j) @ self.j.p_dot-self.a_bar_j.reshape((1, 3)) @\
                B_from_p(self.i.p_dot,self.a_bar_i) @ self.i.p_dot-2*a_dot_from_p_dot(self.i.p,self.a_bar_i, self.i.p_dot).transpose() @\
                a_dot_from_p_dot(self.j.p,self.a_bar_j,self.j.p_dot)+self.f_t_ddot)[0]
 
@@ -49,5 +48,5 @@ class DP1:
     def phi_p(self):
         # Returns the Jacobian of the constraint equation with respect to position. Tuple with
         # 1x4 vector for pi and 1x4 vector for pj
-        return self.a_bar_j.transpose() @ B_from_p(self.i.p, self.a_bar_i), self.a_bar_i.transpose() @ B_from_p(self.j.p, self.a_bar_j)
+        return self.a_bar_j.reshape((1,3)) @ B_from_p(self.i.p, self.a_bar_i), self.a_bar_i.reshape((1,3)) @ B_from_p(self.j.p, self.a_bar_j)
 
