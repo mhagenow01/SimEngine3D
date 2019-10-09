@@ -28,7 +28,8 @@ class DP1:
 
     def phi(self):
         # Returns the value of the actual constraint expression (scalar)
-        return (self.a_bar_i.transpose() @ A_from_p(self.i.p).transpose() @ A_from_p(self.j.p) @ self.a_bar_j - self.f_t)[0][0]
+        return A_from_p(self.i.p)
+        return (self.a_bar_i.transpose() @ A_from_p(self.i.p).transpose() @ (A_from_p(self.j.p) @ self.a_bar_j) - self.f_t)[0][0]
 
     def nu(self):
         # Returns the RHS of the velocity expression (scalar)
