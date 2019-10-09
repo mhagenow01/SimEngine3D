@@ -1,0 +1,51 @@
+ADAMS/View model name: pendulum
+!
+!-------------------------------- SYSTEM UNITS ---------------------------------
+!
+UNITS/FORCE = NEWTON, MASS = KILOGRAM, LENGTH = MILLIMETER, TIME = SECOND
+!
+!----------------------------------- PARTS -------------------------------------
+!
+!----------------------------------- Ground ------------------------------------
+!
+!                            adams_view_name='ground'
+PART/1, GROUND
+!
+!                           adams_view_name='MARKER_3'
+MARKER/3, PART = 1
+!
+!------------------------------------ Part -------------------------------------
+!
+!                            adams_view_name='PART_2'
+PART/2, MASS = 1.9694888490, CM = 5, IP = 24847.3847000000, 262.6891437000
+, 25003.3932000000
+!
+!                           adams_view_name='MARKER_1'
+MARKER/1, PART = 2, REULER = 303.6900675000D, 0.0000000000D, 0.0000000000D
+!
+!                           adams_view_name='MARKER_2'
+MARKER/2, PART = 2, QP = 200.0000000000, -300.0000000000, 0.0000000000
+, REULER = 303.6900675000D, 0.0000000000D, 0.0000000000D
+!
+!                           adams_view_name='MARKER_4'
+MARKER/4, PART = 2
+!
+!                              adams_view_name='cm'
+MARKER/5, PART = 2, QP = 100.0000000000, -150.0000000000, 0.0000000000
+, REULER = 33.6900675300D, 0.0000000000D, 0.0000000000D
+!
+!-------------------------------- CONSTRAINTS ----------------------------------
+!
+JOINT/1, SPHERICAL, I = 3, J = 4
+!
+!------------------------- GRAVITATIONAL ACCELERATION --------------------------
+!
+ACCGRAV/JGRAV = -9806.6500000000
+!
+!----------------------------- ANALYSIS SETTINGS -------------------------------
+!
+OUTPUT/REQSAVE, GRSAVE
+!
+RESULTS/XRF
+!
+END
