@@ -33,10 +33,10 @@ def main():
 
     # Define the actual constraints
     # NOTE: The values of the function and its derivatives are all zero for now
-    dp1 = DP1(rb1, a_rb1, rb2, a_rb2, 1.2, 2.5, 0.2)
-    cd = CD(c, rb1, s_1_p, rb2, s_2_q, 1.2, 2.5, 0.2)
+    dp1 = DP1(rb1, a_rb1, rb2, a_rb2, 1.2, 2.5, 0.2, j_ground=False)
+    cd = CD(c, rb1, s_1_p, rb2, s_2_q, 1.2, 2.5, 0.2, j_ground=False)
 
-    print("DP1 values:")
+    print("####### DP1 values: #########")
     print("PHI:")
     print(dp1.phi())
     print("Nu:")
@@ -48,7 +48,7 @@ def main():
     print("PHI_p:")
     print(dp1.phi_p())
 
-    print("CD values:")
+    print("####### CD values: #########")
     print("PHI:")
     print(cd.phi())
     print("Nu:")
