@@ -8,6 +8,19 @@ def A_from_p(p):
     e = np.array(p[1:]).reshape((3, 1))
     return (np.power(e0, 2) - (e.reshape((1, 3)) @ e))*np.eye(3)+2*(e @ e.reshape((1, 3)))+2*e0*a_tilde(e)
 
+def p_from_A(A):
+
+    # if the trace of A doesn't equal -1 (FIX!!!!!)
+    A.reshape((3, 3))
+    trA = np.trace(A)
+    e0 = np.sqrt((trA+1)/4)
+
+    # Now get the signs
+    e1 = np.sqrt((1+2*A[0][0]-trA+1)/4)
+    e2 = np.sqrt((1+2*A[1][1]-trA+1)/4)
+    e3 = np.sqrt((1+2*A[2][2]-trA+1)/4)
+    return np.array([e0, e1, e2, e3]).reshape((4, 1))
+
 
 def a_tilde(a):
     a = a.reshape((3, ))
