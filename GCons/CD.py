@@ -39,7 +39,7 @@ class CD:
     def gamma(self):
         # Returns the RHS of the acceleration expression (scalar)
         return (self.c.transpose() @ B_from_p(self.i.p_dot, self.s_bar_ip) @ self.i.p_dot - self.c.transpose() \
-               @ B_from_p(self.j.p_dot, self.s_bar_jq) @ self.j.p_dot + self.f_t_ddot)[0][0]
+               @ B_from_p(self.j.p_dot, self.s_bar_jq) @ self.j.p_dot + self.f_t_ddot).reshape((1,1))
 
     def phi_r(self):
         # Returns the Jacobian of the constraint equation with respect to position. Tuple with

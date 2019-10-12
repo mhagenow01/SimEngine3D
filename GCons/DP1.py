@@ -40,7 +40,7 @@ class DP1:
         return (-self.a_bar_i.reshape((1, 3)) @ A_from_p(self.i.p).transpose() @ B_from_p(self.j.p_dot, self.a_bar_j) @
                 self.j.p_dot-self.a_bar_j.reshape((1, 3)) @ A_from_p(self.j.p).transpose() @ B_from_p(self.i.p_dot,self.a_bar_i) @
                 self.i.p_dot-2*a_dot_from_p_dot(self.i.p,self.a_bar_i, self.i.p_dot).transpose() @\
-               a_dot_from_p_dot(self.j.p,self.a_bar_j,self.j.p_dot)+self.f_t_ddot)[0][0]
+               a_dot_from_p_dot(self.j.p,self.a_bar_j,self.j.p_dot)+self.f_t_ddot).reshape((1,1))
 
     def phi_r(self):
         # Returns the Jacobian of the constraint equation with respect to position. Tuple with
