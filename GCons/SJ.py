@@ -60,10 +60,10 @@ class SJ:
         phi_r_three = self.cd_3.phi_r()
 
         if self.j_ground is True:
-            return np.stack((phi_r_one, phi_r_two, phi_r_three))
+            return np.stack((phi_r_one, phi_r_two, phi_r_three)).reshape((3,3))
         else:
             #There are two entries (i and j). stack each to create two new entries
-            return np.stack((phi_r_one[0], phi_r_two[0], phi_r_three[0])), np.stack((phi_r_one[1], phi_r_two[1], phi_r_three[1]))
+            return np.stack((phi_r_one[0], phi_r_two[0], phi_r_three[0])).reshape((3,3)), np.stack((phi_r_one[1], phi_r_two[1], phi_r_three[1])).reshape((3,3))
 
     def phi_p(self):
         # Returns the Jacobian of the constraint equation with respect to position. Tuple with
