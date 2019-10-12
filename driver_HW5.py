@@ -1,11 +1,10 @@
 """ This function allows for the testing of the individual
-expressions for the two Gcons (DP2 & D) relating two rigid bodies
-for Homework 6
+expressions for the two Gcons relating two rigid bodies
 """
 
 from Utilities.RigidBody import RigidBody
-from GCons.DP2 import DP2
-from GCons.D import D
+from GCons.DP1 import DP1
+from GCons.CD import CD
 import numpy as np
 
 def main():
@@ -29,32 +28,35 @@ def main():
     a_rb2 = np.array([[1.], [0.0], [0.0]])
     s_2_q = np.array([[0.0], [0], [0.0]])
 
+    # Define the driving functions
+    c = np.array([[0], [1], [0]])
+
     # Define the actual constraints
     # NOTE: The values of the function and its derivatives are all zero for now
-    dp2 = DP2(rb1, a_rb1, s_1_p, rb2, s_2_q, 0, 0, 0, j_ground=False)
-    d = D(rb1, s_1_p, rb2, s_2_q, 0, 0, 0, j_ground=False)
+    dp1 = DP1(rb1, a_rb1, rb2, a_rb2, 0, 0, 0, j_ground=False)
+    cd = CD(c, rb1, s_1_p, rb2, s_2_q, 0, 0, 0, j_ground=False)
 
-    print("####### DP2 values: #########")
+    print("####### DP1 values: #########")
     print("PHI:")
-    print(dp2.phi())
+    print(dp1.phi())
     print("Nu:")
-    print(dp2.nu())
+    print(dp1.nu())
     print("Gamma:")
-    print(dp2.gamma())
+    print(dp1.gamma())
     print("PHI_r:")
-    print(dp2.phi_r())
+    print(dp1.phi_r())
     print("PHI_p:")
-    print(dp2.phi_p())
+    print(dp1.phi_p())
 
-    print("####### D values: #########")
+    print("####### CD values: #########")
     print("PHI:")
-    print(d.phi())
+    print(cd.phi())
     print("Nu:")
-    print(d.nu())
+    print(cd.nu())
     print("Gamma:")
-    print(d.gamma())
+    print(cd.gamma())
     print("PHI_r:")
-    print(d.phi_r())
+    print(cd.phi_r())
     print("PHI_p:")
-    print(d.phi_p())
+    print(cd.phi_p())
 

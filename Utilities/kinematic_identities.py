@@ -28,3 +28,9 @@ def B_from_p(p,s_bar):
 def a_dot_from_p_dot(p, s_bar, p_dot):
     return B_from_p(p, s_bar) @ p_dot
 
+def d_from_vecs(i,s_bar_ip,j,s_bar_jq):
+    return j.r + A_from_p(j.p) @ s_bar_jq - i.r - A_from_p(i.p) @ s_bar_ip
+
+def d_dot_from_vecs(i,s_bar_ip,j,s_bar_jq):
+    return j.r_dot + B_from_p(j.p, s_bar_jq) @ j.p_dot - i.r_dot - B_from_p(i.p, s_bar_ip) @ i.p_dot
+
