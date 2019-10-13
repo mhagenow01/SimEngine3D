@@ -42,7 +42,7 @@ def setUpPendulum():
     t = 0.
     f = np.sin(np.pi / 4 * np.cos(2 * t))
     f_dot = -np.cos(np.pi/4 * np.cos(2*t)) * np.pi/2 * np.sin(2*t)
-    f_ddot = np.sin(np.pi/4 * np.cos(2*t)) * np.power(np.pi,2)/4 * np.power(np.sin(2*t),2)- \
+    f_ddot = -np.sin(np.pi/4 * np.cos(2*t)) * np.power(np.pi,2)/4 * np.power(np.sin(2*t),2) \
              -np.cos(np.pi / 4 * np.cos(2 * t)) * np.pi * np.cos(2*t)
     dp1 = DP1(i, a_bar_i, j, d_bar_j, f, f_dot, f_ddot, j_ground=True)
 

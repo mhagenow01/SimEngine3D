@@ -34,8 +34,6 @@ class Revolute:
         # Returns the value of the SJ and Perp1 constraint expressions (5x1 vector)
         phi_one = self.sj.phi()
         phi_two = self.perp1.phi()
-        print(np.shape(phi_one))
-        print(np.shape(phi_two))
         return np.concatenate((phi_one, phi_two), axis=0).reshape((5, 1))
 
     def nu(self):
