@@ -38,10 +38,10 @@ def main():
 
     # Define the actual constraints
     # NOTE: The values of the function and its derivatives are all zero for now
-    sj = SJ(rb1,s_1_p,rb2,s_2_q,j_ground=True)
-    perp1 = Perp1(rb1,a_rb1,b_rb1,rb2,c_rb2,j_ground=True)
+    sj = SJ(rb1,s_1_p,rb2,s_2_q,j_ground=False)
+    perp1 = Perp1(rb1,a_rb1,b_rb1,rb2,c_rb2,j_ground=False)
 
-    rev = Revolute(rb1,s_1_p,a_rb1,b_rb1,rb2,s_2_q,c_rb2,j_ground=True)
+    rev = Revolute(rb1,s_1_p,a_rb1,b_rb1,rb2,s_2_q,c_rb2,j_ground=False)
 
     print("####### SJ values: #########")
     print("PHI:")

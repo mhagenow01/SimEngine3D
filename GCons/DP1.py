@@ -29,11 +29,11 @@ class DP1:
 
     def phi(self):
         # Returns the value of the actual constraint expression (scalar)
-        return (self.a_bar_i.transpose() @ A_from_p(self.i.p).transpose() @ (A_from_p(self.j.p) @ self.a_bar_j) - self.f_t)[0][0]
+        return (self.a_bar_i.transpose() @ A_from_p(self.i.p).transpose() @ (A_from_p(self.j.p) @ self.a_bar_j) - self.f_t).reshape((1,1))
 
     def nu(self):
         # Returns the RHS of the velocity expression (scalar)
-        return self.f_t_dot
+        return np.array(self.f_t_dot).reshape((1,1))
 
     def gamma(self):
         # Returns the RHS of the acceleration expression (scalar)
@@ -46,14 +46,14 @@ class DP1:
         # Returns the Jacobian of the constraint equation with respect to position. Tuple with
         # 1x3 vector for ri and 1x3 vector for rj
         if self.j_ground is True:
-            return np.zeros((3,))
-        return np.zeros((3,)), np.zeros((3,))
+            return np.zeros((3,)).reshape((1,3))
+        return np.zeros((3,)).reshape((1,3)), np.zeros((3,)).reshape((1,3))
 
     def phi_p(self):
         # Returns the Jacobian of the constraint equation with respect to position. Tuple with
         # 1x4 vector for pi and 1x4 vector for pj
         if self.j_ground is True:
-            return self.a_bar_j.reshape((1,3)) @ A_from_p(self.j.p).transpose() @ B_from_p(self.i.p, self.a_bar_i)
-        return self.a_bar_j.reshape((1,3)) @ A_from_p(self.j.p).transpose() @ B_from_p(self.i.p, self.a_bar_i),\
-               self.a_bar_i.reshape((1,3)) @ A_from_p(self.i.p).transpose() @ B_from_p(self.j.p, self.a_bar_j)
+            return (self.a_bar_j.reshape((1,3)) @ A_from_p(self.j.p).transpose() @ B_from_p(self.i.p, self.a_bar_i)).reshape((1,4))
+        return (self.a_bar_j.reshape((1,3)) @ A_from_p(self.j.p).transpose() @ B_from_p(self.i.p, self.a_bar_i)).reshape((1,4)),\
+               (self.a_bar_i.reshape((1,3)) @ A_from_p(self.i.p).transpose() @ B_from_p(self.j.p, self.a_bar_j)).reshape((1,4))
 

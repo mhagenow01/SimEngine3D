@@ -30,11 +30,11 @@ class D:
     def phi(self):
         # Returns the value of the actual constraint expression (scalar)
         return (d_from_vecs(self.i, self.s_bar_ip, self.j, self.s_bar_jq).reshape((1, 3)) @
-                d_from_vecs(self.i, self.s_bar_ip, self.j, self.s_bar_jq).reshape((3, 1)) - self.f_t)[0][0]
+                d_from_vecs(self.i, self.s_bar_ip, self.j, self.s_bar_jq).reshape((3, 1)) - self.f_t).reshape((1,1))
 
     def nu(self):
         # Returns the RHS of the velocity expression (scalar)
-        return self.f_t_dot
+        return np.array(self.f_t_dot).reshape((1,1))
 
     def gamma(self):
         # Returns the RHS of the acceleration expression (scalar)
@@ -44,7 +44,7 @@ class D:
                 B_from_p(self.i.p_dot, self.s_bar_ip) @ self.i.p_dot -
                 2*d_dot_from_vecs(self.i, self.s_bar_ip, self.j, self.s_bar_jq).reshape((1, 3)) @
                 d_dot_from_vecs(self.i, self.s_bar_ip, self.j, self.s_bar_jq).reshape((3, 1)) +
-                self.f_t_ddot)[0][0]
+                self.f_t_ddot).reshape((1,1))
 
     def phi_r(self):
         # Returns the Jacobian of the constraint equation with respect to position. Tuple with
@@ -57,7 +57,7 @@ class D:
         # Returns the Jacobian of the constraint equation with respect to position. Tuple with
         # 1x4 vector for pi and 1x4 vector for pj
         if self.j_ground is True:
-            return -2*d_from_vecs(self.i, self.s_bar_ip, self.j, self.s_bar_jq).reshape((1, 3)) @ B_from_p(self.i.p,self.s_bar_ip)
-        return -2*d_from_vecs(self.i, self.s_bar_ip, self.j, self.s_bar_jq).reshape((1, 3)) @ B_from_p(self.i.p,self.s_bar_ip),\
-               2*d_from_vecs(self.i, self.s_bar_ip, self.j, self.s_bar_jq).reshape((1, 3)) @ B_from_p(self.j.p,self.s_bar_jq)
+            return (-2*d_from_vecs(self.i, self.s_bar_ip, self.j, self.s_bar_jq).reshape((1, 3)) @ B_from_p(self.i.p,self.s_bar_ip)).reshape((1,4))
+        return (-2*d_from_vecs(self.i, self.s_bar_ip, self.j, self.s_bar_jq).reshape((1, 3)) @ B_from_p(self.i.p,self.s_bar_ip)).reshape((1,4)),\
+               (2*d_from_vecs(self.i, self.s_bar_ip, self.j, self.s_bar_jq).reshape((1, 3)) @ B_from_p(self.j.p,self.s_bar_jq)).reshape((1,4))
 

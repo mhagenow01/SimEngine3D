@@ -54,10 +54,10 @@ class Perp1:
         phi_r_two = self.dp1_2.phi_r()
 
         if self.j_ground is True:
-            return np.stack((phi_r_one, phi_r_two))
+            return np.stack((phi_r_one, phi_r_two)).reshape((2,3))
         else:
             #There are two entries (i and j). stack each to create two new entries
-            return np.stack((phi_r_one[0], phi_r_two[0])), np.stack((phi_r_one[1], phi_r_two[1]))
+            return np.stack((phi_r_one[0], phi_r_two[0])).reshape((2,3)), np.stack((phi_r_one[1], phi_r_two[1])).reshape((2,3))
 
     def phi_p(self):
         # Returns the Jacobian of the constraint equation with respect to position. Tuple with

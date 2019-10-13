@@ -31,11 +31,11 @@ class DP2:
     def phi(self):
         # Returns the value of the actual constraint expression (scalar)
         return (self.a_bar_i.reshape((1,3)) @ A_from_p(self.i.p).transpose() @
-                d_from_vecs(self.i, self.s_bar_ip, self.j, self.s_bar_jq) - self.f_t)[0][0]
+                d_from_vecs(self.i, self.s_bar_ip, self.j, self.s_bar_jq) - self.f_t).reshape((1,1))
 
     def nu(self):
         # Returns the RHS of the velocity expression (scalar)
-        return self.f_t_dot
+        return np.array(self.f_t_dot).reshape((1,1))
 
     def gamma(self):
         # Returns the RHS of the acceleration expression (scalar)
@@ -43,22 +43,22 @@ class DP2:
                 self.a_bar_i.reshape((1,3)) @ A_from_p(self.i.p).transpose() @ B_from_p(self.i.p_dot,self.s_bar_ip) @ self.i.p_dot -
                 d_from_vecs(self.i, self.s_bar_ip, self.j, self.s_bar_jq).reshape((1,3)) @ B_from_p(self.i.p_dot,self.a_bar_i) @ self.i.p_dot -
                 2 * a_dot_from_p_dot(self.i.p,self.a_bar_i,self.i.p_dot).reshape((1,3)) @ d_dot_from_vecs(self.i,self.s_bar_ip,self.j,self.s_bar_jq) +
-                self.f_t_ddot)[0][0]
+                self.f_t_ddot).reshape((1,1))
 
     def phi_r(self):
         # Returns the Jacobian of the constraint equation with respect to position. Tuple with
         # 1x3 vector for ri and 1x3 vector for rj
         if self.j_ground is True:
-            return -self.a_bar_i.reshape((1,3)) @ A_from_p(self.i.p).transpose()
-        return -self.a_bar_i.reshape((1,3)) @ A_from_p(self.i.p).transpose(), self.a_bar_i.reshape((1,3)) @ A_from_p(self.i.p).transpose()
+            return (-self.a_bar_i.reshape((1,3)) @ A_from_p(self.i.p).transpose()).reshape((1,3))
+        return (-self.a_bar_i.reshape((1,3)) @ A_from_p(self.i.p).transpose()).reshape((1,3)), (self.a_bar_i.reshape((1,3)) @ A_from_p(self.i.p).transpose()).reshape((1,3))
 
     def phi_p(self):
         # Returns the Jacobian of the constraint equation with respect to position. Tuple with
         # 1x4 vector for pi and 1x4 vector for pj
         if self.j_ground is True:
-            return d_from_vecs(self.i, self.s_bar_ip, self.j, self.s_bar_jq).reshape((1, 3)) @ B_from_p(self.i.p, self.a_bar_i) - \
-               self.a_bar_i.reshape((1 ,3)) @ A_from_p(self.i.p).transpose() @ B_from_p(self.i.p, self.s_bar_ip)
-        return d_from_vecs(self.i, self.s_bar_ip, self.j, self.s_bar_jq).reshape((1, 3)) @ B_from_p(self.i.p, self.a_bar_i) - \
-               self.a_bar_i.reshape((1 ,3)) @ A_from_p(self.i.p).transpose() @ B_from_p(self.i.p, self.s_bar_ip), \
-               self.a_bar_i.reshape((1, 3)) @ A_from_p(self.i.p).transpose() @ B_from_p(self.j.p, self.s_bar_jq)
+            return (d_from_vecs(self.i, self.s_bar_ip, self.j, self.s_bar_jq).reshape((1, 3)) @ B_from_p(self.i.p, self.a_bar_i) - \
+               self.a_bar_i.reshape((1 ,3)) @ A_from_p(self.i.p).transpose() @ B_from_p(self.i.p, self.s_bar_ip)).reshape((1,4))
+        return (d_from_vecs(self.i, self.s_bar_ip, self.j, self.s_bar_jq).reshape((1, 3)) @ B_from_p(self.i.p, self.a_bar_i) - \
+               self.a_bar_i.reshape((1 ,3)) @ A_from_p(self.i.p).transpose() @ B_from_p(self.i.p, self.s_bar_ip)).reshape((1,4)), \
+               (self.a_bar_i.reshape((1, 3)) @ A_from_p(self.i.p).transpose() @ B_from_p(self.j.p, self.s_bar_jq)).reshape((1,4))
 
