@@ -88,7 +88,7 @@ def setUpPendulum():
         p_norm_i.update(i)
 
         # Newton-Raphson to try and converge on the values of pi and ri
-        # Hard-coded to 10 iterations
+        # Hard-coded to 10 iterations. Could also do based on a tolerance.
         num_iterations=10
         for ii in range(0,num_iterations):
             # Current guesses for generalized coordinates
@@ -100,8 +100,6 @@ def setUpPendulum():
             phi_q_dp1 = np.concatenate((dp1.phi_r(), dp1.phi_p()), axis=1)
             phi_q_p_norm = np.concatenate((p_norm_i.phi_r(), p_norm_i.phi_p()), axis=1)
             PHI_Q = np.concatenate((phi_q_rj, phi_q_dp1, phi_q_p_norm), axis=0)
-            print(PHI_Q)
-            return
 
             # Assess new guess
             q1 = q0 - np.linalg.inv(PHI_Q) @ PHI
@@ -219,15 +217,6 @@ def setUpPendulum():
 
     plt.show()
 
-
-    ###### Print the Desired Initial Properties ########################
-    NU = np.concatenate((RJ.nu(), dp1.nu().reshape((1,1))), axis=0)
-    # print("NU:")
-    # print(NU)
-
-    GAMMA = np.concatenate((RJ.gamma(), dp1.gamma()), axis=0)
-    # print("GAMMA:")
-    # print(GAMMA)
 
 
 if __name__ == "__main__":

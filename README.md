@@ -20,7 +20,7 @@ the ground, there is a constraint flag to not return the jacobians.
 I have provided a file called driver.py which allows for testing of the DP2 and D GCons. There also various other
 testing files for the other GCons (e.g. SJ, Revolute, etc.) in the test_code folder.
 For #2, there is a file simEngine3DA6P2.py (note: no hyphen) that sets up the pendulum problem and prints out the initial values
-of the constraint-related quantities. Note: the expressions are for the geometric and driving constraints and DO NOT include the euler parameter normalization constraints. 
+of the constraint-related quantities. Note: the expressions include geometric, driving, and normalization constraints. 
 For #3, there is a file simEngine3DA6P3.y (note: no hyphen) that runs the kinematic analysis for the pendulum for 10 seconds. The Newton-Raphson does 10 iterations per timestep. Once completed, the program generates 6 plots for the position/velocity/acceleration information for O' and Q.
 
  

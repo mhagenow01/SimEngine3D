@@ -7,6 +7,7 @@ from Utilities.RigidBody import RigidBody
 from Utilities.kinematic_identities import p_from_A
 from GCons.Revolute import Revolute
 from GCons.DP1 import DP1
+from GCons.P_norm import P_norm
 
 def setUpPendulum():
 
@@ -46,23 +47,27 @@ def setUpPendulum():
              -np.cos(np.pi / 4 * np.cos(2 * t)) * np.pi * np.cos(2*t)
     dp1 = DP1(i, a_bar_i, j, d_bar_j, f, f_dot, f_ddot, j_ground=True)
 
+    ####### Normalization Constraint ###################################
+    p_norm_i = P_norm(i)
+
     ###### Print the Desired Initial Properties ########################
-    PHI = np.concatenate((RJ.phi(), dp1.phi().reshape((1,1))),axis=0)
+    PHI = np.concatenate((RJ.phi(), dp1.phi(), p_norm_i.phi()), axis=0)
     print("PHI:")
     print(PHI)
 
     print ()
-    phi_q_rj = np.concatenate((RJ.phi_r(),RJ.phi_p()),axis=1)
-    phi_q_dp1 = np.concatenate((dp1.phi_r().reshape((1,3)),dp1.phi_p()),axis=1)
-    PHI_Q = np.concatenate((phi_q_rj,phi_q_dp1),axis=0)
+    phi_q_rj = np.concatenate((RJ.phi_r(), RJ.phi_p()), axis=1)
+    phi_q_dp1 = np.concatenate((dp1.phi_r(), dp1.phi_p()), axis=1)
+    phi_q_p_norm = np.concatenate((p_norm_i.phi_r(), p_norm_i.phi_p()), axis=1)
+    PHI_Q = np.concatenate((phi_q_rj, phi_q_dp1, phi_q_p_norm), axis=0)
     print("PHI_Q")
     print(PHI_Q)
 
-    NU = np.concatenate((RJ.nu(), dp1.nu().reshape((1,1))), axis=0)
+    NU = np.concatenate((RJ.nu(), dp1.nu(), p_norm_i.nu()), axis=0)
     print("NU:")
     print(NU)
 
-    GAMMA = np.concatenate((RJ.gamma(), dp1.gamma()), axis=0)
+    GAMMA = np.concatenate((RJ.gamma(), dp1.gamma(), p_norm_i.gamma()), axis=0)
     print("GAMMA:")
     print(GAMMA)
 
