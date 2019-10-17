@@ -19,13 +19,13 @@ def setUpPendulum():
 
 
     # Initial configuration for body i
-    r_i = np.array([0., np.sqrt(2)/2, -np.sqrt(2)/2]).reshape((3,1))
+    r_i = np.array([0., 2*np.sqrt(2)/2, -2*np.sqrt(2)/2]).reshape((3,1))
 
     # Need to convert A TO P for use in this formulation
     A_i_initial = np.array([[0., 0., 1],[np.sqrt(2)/2, np.sqrt(2)/2, 0],[-np.sqrt(2)/2, np.sqrt(2)/2, 0]])
     p_i_initial = p_from_A(A_i_initial)
     i = RigidBody(r_i,p_i_initial) # velocities as defaults
-    s_bar_i_q = np.array([-1., 0., 0.]).reshape((3,1))
+    s_bar_i_q = np.array([-2., 0., 0.]).reshape((3,1))
 
 
     # Define the local vectors
