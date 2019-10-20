@@ -49,3 +49,14 @@ def d_from_vecs(i,s_bar_ip,j,s_bar_jq):
 def d_dot_from_vecs(i,s_bar_ip,j,s_bar_jq):
     return j.r_dot + B_from_p(j.p, s_bar_jq) @ j.p_dot - i.r_dot - B_from_p(i.p, s_bar_ip) @ i.p_dot
 
+def G_from_p(p):
+    p.reshape((4,1))
+    e0 = p[0]
+    e = np.array(p[1:]).reshape((3, 1))
+
+    G = np.zeros((3, 4))
+    G[:, 0] = e.reshape((3,))
+    G[:, 1:] = -a_tilde(e)+e0*np.eye(3)
+
+    return G
+
