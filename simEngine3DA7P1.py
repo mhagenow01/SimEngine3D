@@ -10,7 +10,7 @@ from GCons.DP1 import DP1
 from GCons.P_norm import P_norm
 import matplotlib.pyplot as plt
 
-def setUpPendulum():
+def inverseDyanmics():
 
     ###### Define the two bodies ################
     # Body j is going to be the ground and as such doesn't have any generalized coordinates
@@ -121,7 +121,7 @@ def setUpPendulum():
 
         # With the accelerations, we can solve for the lagrange multipliers
 
-        # mass matrrix
+        # mass matrix
         m = np.power(0.05,2) * 4 * 7800
         M = m*np.eye(3)
 
@@ -135,7 +135,9 @@ def setUpPendulum():
 
 
         RHS = np.zeros((7,1))
-        RHS[0:3,:] = - M @ r_ddot
+        F = np.array([0., 0., -9.81*m]).reshape((3,1))
+        # F = np.array([0., 0., 0.]).reshape((3,1))
+        RHS[0:3,:] = F - M @ r_ddot
         RHS[3:,:] = -Jp @ p_ddot
 
         LHS = np.zeros((7, 7))
@@ -170,4 +172,4 @@ def setUpPendulum():
 
 
 if __name__ == "__main__":
-    setUpPendulum()
+    inverseDyanmics()
