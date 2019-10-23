@@ -17,7 +17,7 @@ def convergenceAnalysis():
     # solve a linear system for delta
     # update, until updates are small enough
 
-    h_vals = [0.1, 0.05, 0.02, 0.01, 0.005, 0.002, 0.001, 0.0005, 0.0002, 0.0001, 0.00005, 0.00002, 0.00001]
+    h_vals = np.logspace(-4,-1,20)
     BDF_errors = []
     BE_errors = []
 
@@ -25,8 +25,8 @@ def convergenceAnalysis():
     for h in h_vals:
 
         ############# BACKWARDS EULER ###################
-        max_iterations = 100
-        epsilon = 10 ** -10
+        max_iterations = 10
+        #epsilon = 10 ** -10
 
         # Initial Conditions (Note: This is an LTV System)
         y_initial= 1
@@ -37,9 +37,11 @@ def convergenceAnalysis():
         # solve for 10 seconds
         simulation_length=10
 
+        final_val = 0
         for tt in np.arange(t_initial+h, simulation_length+h, h):
             # Solve for the timestep
-            print(tt)
+            #print(tt)
+            final_val = tt
 
             num_iterations = 0
             curr_norm = 10 ** 10 # Start with large number so first iteration always executes
@@ -47,7 +49,7 @@ def convergenceAnalysis():
             # Starting point for new values
             yn = yn_prev
 
-            while np.abs(curr_norm) > (epsilon) and num_iterations<max_iterations:
+            while  num_iterations<max_iterations: #np.abs(curr_norm) > (epsilon) and
                 # Calculate the function to solve for the new values via Newton-Raphson
                 g = np.zeros((1,1))
                 g[0,0] = yn + h * yn ** 2 + h/(tt ** 4) - yn_prev
@@ -69,7 +71,7 @@ def convergenceAnalysis():
 
 
         # Value from analytical solution to generate error
-        closed_form_value = 1/(simulation_length)+1/(simulation_length **2) * np.tan((1/simulation_length) + np.pi - 1)
+        closed_form_value = 1/(final_val)+1/(final_val **2) * np.tan((1/final_val) + np.pi - 1)
 
         # Add backwards euler for this value of h
         BE_errors.append(np.abs(closed_form_value-yn))
@@ -85,7 +87,6 @@ def convergenceAnalysis():
         t_initial = 1
 
         # Prime the method with the last 4 values
-
         prev_time_1 = t_initial+3*h
         yn_prev_1 = 1/(prev_time_1)+1/(prev_time_1 **2) * np.tan((1/prev_time_1) + np.pi - 1)
         prev_time_2 = t_initial+2*h
@@ -98,9 +99,11 @@ def convergenceAnalysis():
         # solve for 10 seconds
         simulation_length = 10
 
+        final_val = 0.0
         for tt in np.arange(t_initial + 4*h, simulation_length + h, h):
             # Solve for the timestep
-            print(tt)
+            #print(tt)
+            final_val = tt
 
             num_iterations = 0
             curr_norm = 10 ** 10  # Start with large number so first iteration always executes
@@ -108,7 +111,7 @@ def convergenceAnalysis():
             # Starting point for new values
             yn = yn_prev_1
 
-            while np.abs(curr_norm) > (epsilon) and num_iterations < max_iterations:
+            while  num_iterations < max_iterations: #np.abs(curr_norm) > (epsilon) and
                 # Calculate the function to solve for the new values via Newton-Raphson
                 g = np.zeros((1, 1))
                 g[0, 0] = yn -(48/25)*yn_prev_1 +(36/25)*yn_prev_2-(16/25)*yn_prev_3+(3/25)*yn_prev_4+\
@@ -135,8 +138,11 @@ def convergenceAnalysis():
             yn_prev_1 = yn
 
         # Calculate BDF error for plot
+
+        closed_form_value = 1 / (final_val) + 1 / (final_val ** 2) * np.tan((1 / final_val) + np.pi - 1)
         BDF_errors.append(np.abs(closed_form_value - yn))
         print ("BDF:",yn)
+
 
     #Plot the results Linear
     plt.figure(0)
