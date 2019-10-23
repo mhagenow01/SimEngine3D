@@ -55,7 +55,7 @@ def G_from_p(p):
     e = np.array(p[1:]).reshape((3, 1))
 
     G = np.zeros((3, 4))
-    G[:, 0] = e.reshape((3,))
+    G[:, 0] = -e.reshape((3,))
     G[:, 1:] = -a_tilde(e)+e0*np.eye(3)
 
     return G
