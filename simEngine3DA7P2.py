@@ -25,7 +25,7 @@ def solveIVP():
     y_val = []
 
     # Initial Conditions
-    x_initial= 1
+    x_initial= 0
     y_initial= 2
 
     time.append(0.)

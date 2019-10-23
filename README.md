@@ -23,4 +23,9 @@ For #2, there is a file simEngine3DA6P2.py (note: no hyphen) that sets up the pe
 of the constraint-related quantities. Note: the expressions include geometric, driving, and normalization constraints. 
 For #3, there is a file simEngine3DA6P3.y (note: no hyphen) that runs the kinematic analysis for the pendulum for 10 seconds. The Newton-Raphson does 10 iterations per timestep. Once completed, the program generates 6 plots for the position/velocity/acceleration information for O' and Q.
 
- 
+## HW 7 - Inverse Dynamics
+I have provided a file simEngine3DA7P1.py which performs the kinematic analysis and plots the torques from the driving constraints
+as well as the overall reaction forces for body i (not required). I have provided a file simEngine3DA7P2.py which implements
+backwards Euler for the given IVP (note the system does not evolve in time from the given starting configuration). I have provided a file simEngine3DA7P3.py
+which performs the Backwards Euler vs BDF (4th order) Convergence Analysis. It will plot the linear and log-log convergence plots
+as well as calculate the slopes on the log-log plot.

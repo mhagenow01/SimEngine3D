@@ -17,16 +17,15 @@ def convergenceAnalysis():
     # solve a linear system for delta
     # update, until updates are small enough
 
-    h_vals = np.logspace(-4,-1,20)
+    h_vals = np.logspace(-3, -1, 20) # h values distributed logarithmically to make slope plot cleaner
     BDF_errors = []
     BE_errors = []
 
 
     for h in h_vals:
-
+        print("h:",h)
         ############# BACKWARDS EULER ###################
         max_iterations = 10
-        #epsilon = 10 ** -10
 
         # Initial Conditions (Note: This is an LTV System)
         y_initial= 1
@@ -37,10 +36,10 @@ def convergenceAnalysis():
         # solve for 10 seconds
         simulation_length=10
 
-        final_val = 0
+        final_val = 0 # this makes sure the exact solution uses whatever our last t value is if not exactly 10
+
         for tt in np.arange(t_initial+h, simulation_length+h, h):
             # Solve for the timestep
-            #print(tt)
             final_val = tt
 
             num_iterations = 0
@@ -49,7 +48,7 @@ def convergenceAnalysis():
             # Starting point for new values
             yn = yn_prev
 
-            while  num_iterations<max_iterations: #np.abs(curr_norm) > (epsilon) and
+            while  num_iterations<max_iterations: # choosing fixed iterations for convergence comparison
                 # Calculate the function to solve for the new values via Newton-Raphson
                 g = np.zeros((1,1))
                 g[0,0] = yn + h * yn ** 2 + h/(tt ** 4) - yn_prev
@@ -78,15 +77,15 @@ def convergenceAnalysis():
 
 
         ###### 4th Order BDF Method ###################################
-        max_iterations = 100
-        epsilon = 10 ** -10
+        max_iterations = 10
 
         # Initial Conditions (Note: This is an LTV System)
-        y_initial = 1
 
         t_initial = 1
 
         # Prime the method with the last 4 values
+        # I chose to seed forward meaning give it the first four values after 1 second
+        # You could also do it backwards if desired... (ie the four values before 1 second)
         prev_time_1 = t_initial+3*h
         yn_prev_1 = 1/(prev_time_1)+1/(prev_time_1 **2) * np.tan((1/prev_time_1) + np.pi - 1)
         prev_time_2 = t_initial+2*h
@@ -99,19 +98,17 @@ def convergenceAnalysis():
         # solve for 10 seconds
         simulation_length = 10
 
-        final_val = 0.0
+        final_val = 0.0 # this makes sure the exact solution uses whatever our last t value is if not exactly 10
         for tt in np.arange(t_initial + 4*h, simulation_length + h, h):
             # Solve for the timestep
-            #print(tt)
             final_val = tt
 
             num_iterations = 0
-            curr_norm = 10 ** 10  # Start with large number so first iteration always executes
 
             # Starting point for new values
             yn = yn_prev_1
 
-            while  num_iterations < max_iterations: #np.abs(curr_norm) > (epsilon) and
+            while num_iterations < max_iterations: # choosing fixed iterations for convergence comparison
                 # Calculate the function to solve for the new values via Newton-Raphson
                 g = np.zeros((1, 1))
                 g[0, 0] = yn -(48/25)*yn_prev_1 +(36/25)*yn_prev_2-(16/25)*yn_prev_3+(3/25)*yn_prev_4+\
@@ -141,10 +138,9 @@ def convergenceAnalysis():
 
         closed_form_value = 1 / (final_val) + 1 / (final_val ** 2) * np.tan((1 / final_val) + np.pi - 1)
         BDF_errors.append(np.abs(closed_form_value - yn))
-        print ("BDF:",yn)
 
 
-    #Plot the results Linear
+    #Plot the results on a linear scale
     plt.figure(0)
     plt.plot(h_vals,BE_errors, label='backwards euler')
     plt.plot(h_vals,BDF_errors, label='BDF')
@@ -153,6 +149,7 @@ def convergenceAnalysis():
     plt.ylabel('IVP error')
     plt.legend()
 
+    # Print the results on a log-log scale
     plt.figure(1)
     plt.plot(h_vals,BE_errors, label='backwards euler')
     ax = plt.gca()
@@ -164,6 +161,7 @@ def convergenceAnalysis():
     plt.ylabel('IVP error')
     plt.legend()
 
+    # Fit lines to the log-log plots to look at the slope
     mbe, bbe = np.polyfit(np.log(h_vals),np.log(BE_errors), 1)
     mbdf,bbdf = np.polyfit(np.log(h_vals),np.log(BDF_errors), 1)
 
