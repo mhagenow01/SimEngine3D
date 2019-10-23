@@ -25,7 +25,7 @@ def solveIVP():
     y_val = []
 
     # Initial Conditions
-    x_initial= 0.1
+    x_initial= 1
     y_initial= 2
 
     time.append(0.)
@@ -60,9 +60,9 @@ def solveIVP():
             # Calculate the Jacobian
             J = np.zeros((2,2))
             J[0,0]=(1+h)+4*yn*h*(1-np.power(xn,2))/np.power(1+np.power(xn,2),2)
-            J[0,1]=4*xn*h/(1-np.power(xn,2))
+            J[0,1]=4*xn*h/(1+np.power(xn,2))
             J[1, 0] = -h + yn * h * (1 - np.power(xn, 2)) / np.power(1 + np.power(xn, 2), 2)
-            J[1, 1] = 1 + xn * h / (1 - np.power(xn, 2))
+            J[1, 1] = 1 + xn * h / (1 + np.power(xn, 2))
 
             # Calculate Correction
             delta_xy = np.linalg.solve(J,-g)

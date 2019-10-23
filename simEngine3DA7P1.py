@@ -58,6 +58,10 @@ def inverseDyanmics():
     torques_3 = []
     torques_4 = []
 
+    torques_l1 = []
+    torques_l2 = []
+    torques_l3 = []
+
     for t in np.arange(0, simulation_length, timestep):
         # Keep track of progress
         print(t)
@@ -136,7 +140,7 @@ def inverseDyanmics():
 
         RHS = np.zeros((7,1))
         F = np.array([0., 0., -9.81*m]).reshape((3,1))
-        # F = np.array([0., 0., 0.]).reshape((3,1))
+        F = np.array([0., 0., 0.]).reshape((3,1))
         RHS[0:3,:] = F - M @ r_ddot
         RHS[3:,:] = -Jp @ p_ddot
 
@@ -148,11 +152,19 @@ def inverseDyanmics():
         lagrange = np.linalg.solve(LHS, RHS)
 
         # With the lagrange multipliers, we can solve for any required torques
-        req_torque = dp1.phi_p().reshape((1,4)).transpose() @ lagrange[5].reshape((1,1))
+        forces =
+
+        req_torque = -dp1.phi_p().reshape((1,4)).transpose() @ lagrange[5].reshape((1,1))
+        req_torque_local = -0.5*G_from_p(i.p) @ dp1.phi_p().reshape((1,4)).transpose() @ lagrange[5].reshape((1,1))
         torques_1.append(req_torque[0])
         torques_2.append(req_torque[1])
         torques_3.append(req_torque[2])
         torques_4.append(req_torque[3])
+
+        torques_l1.append(req_torque_local[0])
+        torques_l2.append(req_torque_local[1])
+        torques_l3.append(req_torque_local[2])
+
         times.append(t)
 
     #Plot the results
@@ -166,6 +178,15 @@ def inverseDyanmics():
     plt.ylabel('Torque (Nm)')
     plt.legend()
 
+    #Plot the results
+    plt.figure(1)
+    plt.plot(times,torques_l1, label='x')
+    plt.plot(times,torques_l2, label='y')
+    plt.plot(times,torques_l3, label='z')
+    plt.title("Required Torques (local)")
+    plt.xlabel('Time (s)')
+    plt.ylabel('Torque (Nm)')
+    plt.legend()
 
     plt.show()
 

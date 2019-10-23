@@ -17,7 +17,7 @@ def convergenceAnalysis():
     # solve a linear system for delta
     # update, until updates are small enough
 
-    h_vals = [1,0.5,0.2,0.1,0.05, 0.02, 0.01, 0.005, 0.002, 0.001]
+    h_vals = [1,0.5,0.2,0.1,0.05, 0.02, 0.01, 0.005, 0.002, 0.001, 0.0001, 0.00001]
     BDF_errors = []
     BE_errors = []
 
@@ -141,6 +141,9 @@ def convergenceAnalysis():
     #Plot the results
     plt.figure(0)
     plt.plot(h_vals,BE_errors, label='backwards euler')
+    ax = plt.gca()
+    ax.set_yscale('log')
+    ax.set_xscale('log')
     plt.plot(h_vals,BDF_errors, label='BDF')
     plt.title("Convergence Analysis")
     plt.xlabel('h step size')
