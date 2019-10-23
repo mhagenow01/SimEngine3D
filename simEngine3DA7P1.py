@@ -49,7 +49,7 @@ def inverseDyanmics():
 
     ###### Inverse Dynamics (and also kinematics) Analysis ##########
 
-    timestep = 0.01
+    timestep = 0.001
     simulation_length = 10
 
     times = []
@@ -57,6 +57,10 @@ def inverseDyanmics():
     torques_2 = []
     torques_3 = []
     torques_4 = []
+
+    forces_1 = []
+    forces_2 = []
+    forces_3 = []
 
     torques_l1 = []
     torques_l2 = []
@@ -140,7 +144,7 @@ def inverseDyanmics():
 
         RHS = np.zeros((7,1))
         F = np.array([0., 0., -9.81*m]).reshape((3,1))
-        F = np.array([0., 0., 0.]).reshape((3,1))
+        # F = np.array([0., 0., 0.]).reshape((3,1))
         RHS[0:3,:] = F - M @ r_ddot
         RHS[3:,:] = -Jp @ p_ddot
 
@@ -152,8 +156,15 @@ def inverseDyanmics():
         lagrange = np.linalg.solve(LHS, RHS)
 
         # With the lagrange multipliers, we can solve for any required torques
-        forces =
 
+        # Get the reaction forces associated with the driving constraint
+        req_force = -dp1.phi_r().reshape((1,3)).transpose() @ lagrange[5].reshape((1,1))
+        forces_1.append(req_force[0])
+        forces_2.append(req_force[1])
+        forces_3.append(req_force[2])
+
+        # Get the reaction torques associated with the driving constraint
+        # both in the p-generalized coordinates and the local frame PI_BAR = 0.5*G*Phi^T
         req_torque = -dp1.phi_p().reshape((1,4)).transpose() @ lagrange[5].reshape((1,1))
         req_torque_local = -0.5*G_from_p(i.p) @ dp1.phi_p().reshape((1,4)).transpose() @ lagrange[5].reshape((1,1))
         torques_1.append(req_torque[0])
@@ -173,17 +184,27 @@ def inverseDyanmics():
     plt.plot(times,torques_2, label='e1')
     plt.plot(times,torques_3, label='e2')
     plt.plot(times,torques_4, label='e3')
-    plt.title("Required Torques")
+    plt.title("Required Torques (Generalized)")
     plt.xlabel('Time (s)')
     plt.ylabel('Torque (Nm)')
     plt.legend()
 
-    #Plot the results
+    # Plot the results
     plt.figure(1)
+    plt.plot(times, forces_1, label='x')
+    plt.plot(times, forces_2, label='y')
+    plt.plot(times, forces_3, label='z')
+    plt.title("Reaction Forces")
+    plt.xlabel('Time (s)')
+    plt.ylabel('Force (N)')
+    plt.legend()
+
+    #Plot the results
+    plt.figure(2)
     plt.plot(times,torques_l1, label='x')
     plt.plot(times,torques_l2, label='y')
     plt.plot(times,torques_l3, label='z')
-    plt.title("Required Torques (local)")
+    plt.title("Required Torques (Local)")
     plt.xlabel('Time (s)')
     plt.ylabel('Torque (Nm)')
     plt.legend()

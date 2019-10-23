@@ -17,7 +17,7 @@ def convergenceAnalysis():
     # solve a linear system for delta
     # update, until updates are small enough
 
-    h_vals = [1,0.5,0.2,0.1,0.05, 0.02, 0.01, 0.005, 0.002, 0.001, 0.0001, 0.00001]
+    h_vals = [0.1, 0.05, 0.02, 0.01, 0.005, 0.002, 0.001, 0.0005, 0.0002, 0.0001, 0.00005, 0.00002, 0.00001]
     BDF_errors = []
     BE_errors = []
 
@@ -138,8 +138,16 @@ def convergenceAnalysis():
         BDF_errors.append(np.abs(closed_form_value - yn))
         print ("BDF:",yn)
 
-    #Plot the results
+    #Plot the results Linear
     plt.figure(0)
+    plt.plot(h_vals,BE_errors, label='backwards euler')
+    plt.plot(h_vals,BDF_errors, label='BDF')
+    plt.title("Convergence Analysis")
+    plt.xlabel('h step size')
+    plt.ylabel('IVP error')
+    plt.legend()
+
+    plt.figure(1)
     plt.plot(h_vals,BE_errors, label='backwards euler')
     ax = plt.gca()
     ax.set_yscale('log')
@@ -149,6 +157,12 @@ def convergenceAnalysis():
     plt.xlabel('h step size')
     plt.ylabel('IVP error')
     plt.legend()
+
+    mbe, bbe = np.polyfit(np.log(h_vals),np.log(BE_errors), 1)
+    mbdf,bbdf = np.polyfit(np.log(h_vals),np.log(BDF_errors), 1)
+
+    print("BE Log slope:", mbe)
+    print("BDF Log slope:", mbdf)
 
     plt.show()
 
