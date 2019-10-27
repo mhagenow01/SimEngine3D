@@ -154,6 +154,7 @@ def inverseDyanmics():
         LHS[3:, 6] = i.p.reshape((4,))
 
         lagrange = np.linalg.solve(LHS, RHS)
+        print(lagrange[6])
 
         # With the lagrange multipliers, we can solve for any required torques
 
