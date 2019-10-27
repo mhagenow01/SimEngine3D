@@ -1,5 +1,5 @@
 """ Peforms a dynamics analysis for a
-revolute joint pendulum
+revolute joint double pendulum
 """
 
 import numpy as np
@@ -15,21 +15,22 @@ def dynamicsAnalysis():
     sim_length = 2.
     h = 0.01 # step for solver
 
-    ###### Define the two bodies ################
+    ###### Define the three bodies ################
     # Body j is going to be the ground and as such doesn't have any generalized coordinates
     j = RigidBody()  # defaults are all zero
     s_bar_j_q = np.array([0., 0., 0.]).reshape((3,1))
 
-    # Initial configuration for body i
-    r_i = np.array([0., 2*np.sqrt(2)/2, -2*np.sqrt(2)/2]).reshape((3,1))
+    ##### Body i - First Pendulum ########################
+    # Initial configuration for body i - 90 degree theta
+    r_i = np.array([0., 2, 0]).reshape((3,1))
     r_dot_i = np.array([0., 0., 0.]).reshape((3,1))  # no initial velocity
 
     # Need to convert A TO P for use in this formulation
-    A_i_initial = np.array([[0., 0., 1],[np.sqrt(2)/2, np.sqrt(2)/2, 0],[-np.sqrt(2)/2, np.sqrt(2)/2, 0]])
+    A_i_initial = np.array([[0., 0., 1],[1, 0., 0.],[0., 1., 0.]])
     p_i_initial = p_from_A(A_i_initial)
     p_dot_i = np.array([0., 0., 0., 0.]).reshape((4,1)) # orientation is not initially changing
 
-    # mass matrix
+    # mass matrix for body i
     m_i = np.power(0.05, 2) * 4 * 7800
     M_i = m_i * np.eye(3)
 
@@ -39,7 +40,36 @@ def dynamicsAnalysis():
     J_bar_i[1, 1] = (1 / 12) * m_i * (np.power(0.05, 2) + np.power(4, 2))
     J_bar_i[2, 2] = (1 / 12) * m_i * (np.power(0.05, 2) + np.power(4, 2))
 
-    i = RigidBody(r_i,p_i_initial,r_dot_i,p_dot_i,m_i) # velocities as defaults
+    i = RigidBody(r_i,p_i_initial,r_dot_i,p_dot_i,m_i)
+
+    ##### Body k - Second Pendulum ########################
+    # Initial configuration for body k - hanging down
+    r_k = np.array([0., 4, -1]).reshape((3, 1))
+    r_dot_k = np.array([0., 0., 0.]).reshape((3, 1))  # no initial velocity
+
+    # Need to convert A TO P for use in this formulation
+    A_k_initial = np.array([[0., 0., 1], [0, 1., 0.], [-1., 0., 0.]])
+    p_k_initial = p_from_A(A_k_initial)
+    p_dot_k = np.array([0., 0., 0., 0.]).reshape((4, 1))  # orientation is not initially changing
+
+    # mass matrix for body i - assuming same cross section
+    m_k = np.power(0.05, 2) * 2 * 7800  # half the length of body i
+    M_k = m_k * np.eye(3)
+
+    # Inertia matrix
+    J_bar_k = np.zeros((3, 3))
+    J_bar_k[0, 0] = (1 / 12) * m_i * (np.power(0.05, 2) + np.power(0.05, 2))
+    J_bar_k[1, 1] = (1 / 12) * m_i * (np.power(0.05, 2) + np.power(2, 2))
+    J_bar_k[2, 2] = (1 / 12) * m_i * (np.power(0.05, 2) + np.power(2, 2))
+
+    k = RigidBody(r_k, p_k_initial, r_dot_k, p_dot_k, m_k)  # velocities as defaults
+
+    ###### Define the geometric constraints ################
+    #
+    # 1. Revolute joint that holds body 1 (i) to global frame (j)
+    # 2. Revolute joint that holds body 2 (k) to body 1 (i)
+
+    # Revolute joint holding to global frame
     s_bar_i_q = np.array([-2., 0., 0.]).reshape((3,1))
 
     # Define the local vectors of the revolute joint
@@ -47,11 +77,27 @@ def dynamicsAnalysis():
     a_bar_i = np.array([1., 0., 0.]).reshape((3,1))
     b_bar_i = np.array([0., 1., 0.]).reshape((3,1))
 
-    ###### Define the geometric constraints ################
-    RJ = Revolute(i, s_bar_i_q, a_bar_i, b_bar_i, j, s_bar_j_q, c_bar_j, j_ground=True)
-    RJ.update(i,j)
+    RJ1 = Revolute(i, s_bar_i_q, a_bar_i, b_bar_i, j, s_bar_j_q, c_bar_j, j_ground=True)
+    RJ1.update(i,j)
 
+    # Revolute joint holding body 2 to body 1
+    s_bar_k_p = np.array([-1., 0., 0.]).reshape((3, 1))
+
+    # Define the local vectors of the revolute joint
+    c_bar_i = np.array([0., 0., 1.]).reshape((3, 1))
+    a_bar_k = np.array([1., 0., 0.]).reshape((3, 1))
+    b_bar_k = np.array([0., 1., 0.]).reshape((3, 1))
+
+    s_bar_i_p = np.array([2., 0., 0.]).reshape((3, 1))
+
+    RJ2 = Revolute(k, s_bar_k_p, a_bar_k, b_bar_k, i, s_bar_i_p, c_bar_i, j_ground=False)
+    RJ2.update(k, i)
+
+    # Normalization constraints are needed for body i and body k
     p_norm_i = P_norm(i)
+    p_norm_k = P_norm(k)
+
+    ##### UP THROUGH THIS POINT IN CORRECTIONS ################
 
     # Compute the initial conditions for acceleration and the lagrange multipliers
     # by solving a linear system
@@ -126,22 +172,14 @@ def dynamicsAnalysis():
 
         # Step 1 - Compute position and velocity using BDF
 
-        if 1: #tt==h: #first iteration
-            # Use BDF of order 1 - compute static terms
-            cr = r_i_prev + h*r_dot_i_prev
-            crdot = r_dot_i_prev
-            cp = p_i_prev + h * p_dot_i_prev
-            cpdot = p_dot_i_prev
-            beta_0 = 1
 
-        else: # every iteration after the first iteration
-            # Use BDF of order 2 - compute static terms
-            cr = (4/3)*r_i_prev - (1/3)*r_i_two_prev + (8/9)*h*r_dot_i_prev - (2/9)*h*r_dot_i_two_prev
-            crdot = (4/3)*r_dot_i_prev-(1/3)*r_dot_i_two_prev
-            cp = (4 / 3) * p_i_prev - (1 / 3) * p_i_two_prev + (8 / 9) * h * p_dot_i_prev - (
-                        2 / 9) * h * p_dot_i_two_prev
-            cpdot = (4 / 3) * p_dot_i_prev - (1 / 3) * p_dot_i_two_prev
-            beta_0 = (2/3)
+        # Use BDF of order 1 - compute static terms
+        cr = r_i_prev + h*r_dot_i_prev
+        crdot = r_dot_i_prev
+        cp = p_i_prev + h * p_dot_i_prev
+        cpdot = p_dot_i_prev
+        beta_0 = 1
+
 
         # Compute non-linear residual
         iterations = 0
