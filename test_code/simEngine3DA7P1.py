@@ -53,18 +53,28 @@ def inverseDyanmics():
     simulation_length = 10
 
     times = []
+
+    # data output for torques in generalized coordinates
     torques_1 = []
     torques_2 = []
     torques_3 = []
     torques_4 = []
 
+    # data output for reaction forces for driving constraint
     forces_1 = []
     forces_2 = []
     forces_3 = []
 
+    # data output for driving constraint torques in local frame
     torques_l1 = []
     torques_l2 = []
     torques_l3 = []
+
+    # data output for overall reaction forces for body i
+    react_x = []
+    react_y = []
+    react_z = []
+
 
     for t in np.arange(0, simulation_length, timestep):
         # Keep track of progress
@@ -144,10 +154,12 @@ def inverseDyanmics():
 
         RHS = np.zeros((7,1))
         F = np.array([0., 0., -9.81*m]).reshape((3,1))
-        # F = np.array([0., 0., 0.]).reshape((3,1))
+
+        # F = np.array([0., 0., 0.]).reshape((3,1)) # uncomment if no gravity is desired
+
+        # Set up the linear system to be solved for the lagrange multipliers from the EOM
         RHS[0:3,:] = F - M @ r_ddot
         RHS[3:,:] = -Jp @ p_ddot
-
         LHS = np.zeros((7, 7))
         PHI_Q_kinematic = np.concatenate((phi_q_rj, phi_q_dp1), axis=0)
         LHS[:, 0:6] = PHI_Q_kinematic.transpose()
@@ -158,7 +170,7 @@ def inverseDyanmics():
 
         # With the lagrange multipliers, we can solve for any required torques
 
-        # Get the reaction forces associated with the driving constraint
+        # Get the reaction forces associated with the driving constraint (should be zero)
         req_force = -dp1.phi_r().reshape((1,3)).transpose() @ lagrange[5].reshape((1,1))
         forces_1.append(req_force[0])
         forces_2.append(req_force[1])
@@ -172,35 +184,41 @@ def inverseDyanmics():
         torques_2.append(req_torque[1])
         torques_3.append(req_torque[2])
         torques_4.append(req_torque[3])
-
         torques_l1.append(req_torque_local[0])
         torques_l2.append(req_torque_local[1])
         torques_l3.append(req_torque_local[2])
 
+        # Also get the overall reaction forces for body i to verify they are logical
+        PHI_Q_kinematic = np.concatenate((phi_q_rj, phi_q_dp1, phi_q_p_norm), axis=0)
+        react_forces = -PHI_Q_kinematic.transpose() @ lagrange
+        react_x.append(react_forces[0])
+        react_y.append(react_forces[1])
+        react_z.append(react_forces[2])
+
         times.append(t)
 
-    #Plot the results
-    plt.figure(0)
-    plt.plot(times,torques_1, label='e0')
-    plt.plot(times,torques_2, label='e1')
-    plt.plot(times,torques_3, label='e2')
-    plt.plot(times,torques_4, label='e3')
-    plt.title("Required Torques (Generalized)")
-    plt.xlabel('Time (s)')
-    plt.ylabel('Torque (Nm)')
-    plt.legend()
+    # # Plot Generalized torques - disabled by default
+    # plt.figure(0)
+    # plt.plot(times,torques_1, label='e0')
+    # plt.plot(times,torques_2, label='e1')
+    # plt.plot(times,torques_3, label='e2')
+    # plt.plot(times,torques_4, label='e3')
+    # plt.title("Required Torques (Generalized)")
+    # plt.xlabel('Time (s)')
+    # plt.ylabel('Torque (Nm)')
+    # plt.legend()
 
-    # Plot the results
-    plt.figure(1)
-    plt.plot(times, forces_1, label='x')
-    plt.plot(times, forces_2, label='y')
-    plt.plot(times, forces_3, label='z')
-    plt.title("Reaction Forces")
-    plt.xlabel('Time (s)')
-    plt.ylabel('Force (N)')
-    plt.legend()
+    # # Plot driving constraint reaction forces - disabled by default
+    # plt.figure(1)
+    # plt.plot(times, forces_1, label='x')
+    # plt.plot(times, forces_2, label='y')
+    # plt.plot(times, forces_3, label='z')
+    # plt.title("Reaction Forces")
+    # plt.xlabel('Time (s)')
+    # plt.ylabel('Force (N)')
+    # plt.legend()
 
-    #Plot the results
+    # Plot required torques in the body i frame
     plt.figure(2)
     plt.plot(times,torques_l1, label='x')
     plt.plot(times,torques_l2, label='y')
@@ -210,9 +228,17 @@ def inverseDyanmics():
     plt.ylabel('Torque (Nm)')
     plt.legend()
 
+    # Plot body i overall reaction forces
+    plt.figure(3)
+    plt.plot(times,react_x, label='x')
+    plt.plot(times,react_y, label='y')
+    plt.plot(times,react_z, label='z')
+    plt.title("Body i Forces")
+    plt.xlabel('Time (s)')
+    plt.ylabel('Force (Nm)')
+    plt.legend()
+
     plt.show()
-
-
 
 if __name__ == "__main__":
     inverseDyanmics()
