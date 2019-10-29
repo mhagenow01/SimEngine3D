@@ -15,7 +15,7 @@ class P_norm:
 
     def phi(self):
         # Returns the value of the actual constraint expression (scalar)
-        return (self.i.p.reshape((1, 4)) @ self.i.p.reshape((4, 1)) - 1.0).reshape((1, 1))
+        return (0.5*self.i.p.reshape((1, 4)) @ self.i.p.reshape((4, 1)) - 0.5).reshape((1, 1))
 
     def nu(self):
         # Returns the RHS of the velocity expression (scalar)
@@ -33,5 +33,5 @@ class P_norm:
     def phi_p(self):
         # Returns the Jacobian of the constraint equation with respect to position. Tuple with
         # 1x4 vector for pi and 1x4 vector for pj
-        return 2*self.i.p.reshape((1,4))
+        return self.i.p.reshape((1,4))
 

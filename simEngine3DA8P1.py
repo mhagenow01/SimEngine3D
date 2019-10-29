@@ -12,8 +12,8 @@ import matplotlib.pyplot as plt
 
 def dynamicsAnalysis():
     ###### SIMULATION PARAMETERS #################
-    sim_length = 10.
-    h = 0.0001 # step for solver
+    sim_length = 2.
+    h = 0.001 # step for solver
 
     ###### Define the two bodies ################
     # Body j is going to be the ground and as such doesn't have any generalized coordinates
@@ -123,7 +123,7 @@ def dynamicsAnalysis():
 
         # Step 1 - Compute position and velocity using BDF
 
-        if 1: #tt==h: #first iteration
+        if tt==h: #first iteration
             # Use BDF of order 1 - compute static terms
             cr = r_i_prev + h*r_dot_i_prev
             crdot = r_dot_i_prev
@@ -157,18 +157,19 @@ def dynamicsAnalysis():
 
         # Calculate the jacobian for the iterative process (only done once per timestep)
 
+        PSI = computeJacobian(r_i_ddot, p_i_ddot, lagrange, lagrangeP, i, j, RJ, M_i, J_bar_i, cr, crdot, cp, cpdot,
+                              beta_0, h, p_norm_i)
 
-        while iterations < 10: # and np.linalg.norm(correction) > 0.000000001:
+        while iterations < 10 and np.linalg.norm(correction)>0.01:
 
-            PSI = computeJacobian(r_i_ddot, p_i_ddot, lagrange, lagrangeP, i, j, RJ, M_i, J_bar_i, cr, crdot, cp, cpdot,
-                                  beta_0, h, p_norm_i)
+
             g = calculateResidual(r_i_ddot, p_i_ddot, lagrange, lagrangeP, i, j, RJ, M_i, J_bar_i, cr, crdot, cp, cpdot,
                                   beta_0, h, p_norm_i, Fg)
 
             correction = np.linalg.solve(PSI , -g)
             # print(np.linalg.norm(correction))
 
-            correction_scaling = 0.1
+            correction_scaling = 1
             r_i_ddot = r_i_ddot + correction_scaling*correction[0:3,0].reshape((3,1))
             p_i_ddot = p_i_ddot + correction_scaling*correction[3:7,0].reshape((4,1))
             lagrangeP = lagrangeP + correction_scaling*correction[7]
