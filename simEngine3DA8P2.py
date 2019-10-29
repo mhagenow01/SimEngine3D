@@ -97,19 +97,30 @@ def dynamicsAnalysis():
     p_norm_i = P_norm(i)
     p_norm_k = P_norm(k)
 
-    ##### UP THROUGH THIS POINT IN CORRECTIONS ################
+    # Overall mass matrix has body i and body k
+    # and is constant
+    M_total = np.zeros((6,6))
+    M_total[:3,:3]=M_i
+    M_total[3:6,3:6]=M_k
+
 
     # Compute the initial conditions for acceleration and the lagrange multipliers
     # by solving a linear system
 
-    LHS = np.zeros((13,13))
-    LHS[0:3,0:3]=M_i
-    LHS[0:3,8:13]=RJ.phi_r().transpose()
-    Jp = 4 * G_from_p(i.p).transpose() @ J_bar_i @ G_from_p(i.p)
+    # PHIs need to be properly seeded with zeros... UGH
 
-    LHS[3:7,3:7] = Jp
-    LHS[3:7,7] = i.p.reshape((4,))
-    LHS[3:7,8:13] = RJ.phi_p().transpose()
+    LHS = np.zeros((26,26))
+    LHS[0:6,0:6]=M_total
+    LHS[0:6,16:26]=np.concatenate(RJ1.phi_r(), RJ2.phi_r(), axis=0).transpose()
+    Jpi = 4 * G_from_p(i.p).transpose() @ J_bar_i @ G_from_p(i.p)
+    Jpk = 4 * G_from_p(k.p).transpose() @ J_bar_k @ G_from_p(k.p)
+    Jp = np.zeros((8,8))
+    Jp[0:4,0:4]=Jpi
+    Jp[4:8,4:8]=Jpk
+
+    LHS[6:14,6:14] = Jp
+    LHS[6:14,14:16] = i.p.reshape((4,))
+    LHS[6:14,16:26] = np.concatenate(RJ1.phi_p(),RJ2.phi_p())..transpose()
 
     LHS[7,3:7]=i.p.reshape((1,4))
 

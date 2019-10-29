@@ -12,8 +12,8 @@ import matplotlib.pyplot as plt
 
 def dynamicsAnalysis():
     ###### SIMULATION PARAMETERS #################
-    sim_length = 2.
-    h = 0.01 # step for solver
+    sim_length = 1.
+    h = 0.0001 # step for solver
 
     ###### Define the two bodies ################
     # Body j is going to be the ground and as such doesn't have any generalized coordinates
@@ -105,10 +105,7 @@ def dynamicsAnalysis():
 
     printIter = 0
     for tt in np.arange(h,sim_length,h):
-        if (printIter % 1) == 0:
-            #(tt)
-            print("p:" , i.p.transpose(), " t:",tt)
-        printIter = printIter+1
+
 
         # Step 0  - Prime the solver
         # Don't actually need to do anything in this implementation
@@ -143,6 +140,17 @@ def dynamicsAnalysis():
             cpdot = (4 / 3) * p_dot_i_prev - (1 / 3) * p_dot_i_two_prev
             beta_0 = (2/3)
 
+        if (printIter % 100) == 0:
+
+            print("r:" , i.r.transpose(), " t:",tt)
+            # print('v:', i.r_dot.transpose())
+            # print('a:', r_i_ddot.transpose())
+            # g_temp = calculateResidual(r_i_ddot, p_i_ddot, lagrange, lagrangeP, i, j, RJ, M_i, J_bar_i, cr, crdot, cp, cpdot,
+            #                   beta_0, h, p_norm_i, Fg)
+            # print("g:" , g_temp.transpose(), " t:",tt)
+
+        printIter = printIter+1
+
         # Compute non-linear residual
         iterations = 0
         correction = np.ones((13,1)) # seed so first iteration runs
@@ -150,13 +158,16 @@ def dynamicsAnalysis():
         # Calculate the jacobian for the iterative process (only done once per timestep)
 
 
-        while iterations < 80: # and np.linalg.norm(correction) > 0.000000001:
+        while iterations < 10: # and np.linalg.norm(correction) > 0.000000001:
+
             PSI = computeJacobian(r_i_ddot, p_i_ddot, lagrange, lagrangeP, i, j, RJ, M_i, J_bar_i, cr, crdot, cp, cpdot,
                                   beta_0, h, p_norm_i)
             g = calculateResidual(r_i_ddot, p_i_ddot, lagrange, lagrangeP, i, j, RJ, M_i, J_bar_i, cr, crdot, cp, cpdot,
                                   beta_0, h, p_norm_i, Fg)
 
             correction = np.linalg.solve(PSI , -g)
+            # print(np.linalg.norm(correction))
+
             r_i_ddot = r_i_ddot + correction[0:3,0].reshape((3,1))
             p_i_ddot = p_i_ddot + correction[3:7,0].reshape((4,1))
             lagrangeP = lagrangeP + correction[7]
@@ -168,6 +179,7 @@ def dynamicsAnalysis():
         i.r_dot = crdot + beta_0 * h * r_i_ddot
         i.p_dot = cpdot + beta_0 * h * p_i_ddot
 
+        # exit()
         x_i.append(i.r[0])
         y_i.append(i.r[1])
         z_i.append(i.r[2])
@@ -199,20 +211,20 @@ def calculateResidual(r_i_ddot,p_i_ddot, lagrange, lagrangeP, i, j, RJ, M_i, J_b
 
     # form the g matrix (note: no generalized torques)
     g = np.zeros((13,1))
-    g[0:3,0]= (M_i @ r_i_ddot + RJ.phi_r().transpose() @ lagrange-Fg).reshape((3,))
+    g[0:3,0]= (M_i @ r_i_ddot + RJ.phi_r().transpose() @ lagrange- Fg).reshape((3,))
 
     Jp = 4 * G_from_p(i.p).transpose() @ J_bar_i @ G_from_p(i.p)
     g[3:7,0] = (Jp @ p_i_ddot + RJ.phi_p().transpose() @ lagrange + i.p.reshape((4,1)) * lagrangeP).reshape((4,))
     g[7]=(1/(beta_0 **2 * h **2)) * p_norm_i.phi()
-
     g[8:13,0]=((1/(beta_0 **2 * h **2)) * RJ.phi()).reshape((5,))
+
     return g
 
 def computeJacobian(r_i_ddot,p_i_ddot, lagrange, lagrangeP, i, j, RJ, M_i, J_bar_i, cr, crdot, cp, cpdot, beta_0, h, p_norm_i):
     # Quasi-Newton - choosing to not compute all h^2 terms
     # update the body first
-    i.r = cr + beta_0 * (h ** 2) * r_i_ddot
-    i.p = cp + beta_0 * (h ** 2) * p_i_ddot
+    i.r = cr + (beta_0 **2) * (h ** 2) * r_i_ddot
+    i.p = cp + (beta_0 **2) * (h ** 2) * p_i_ddot
     i.r_dot = crdot + beta_0 * h * r_i_ddot
     i.p_dot = cpdot + beta_0 * h * p_i_ddot
 
@@ -232,6 +244,9 @@ def computeJacobian(r_i_ddot,p_i_ddot, lagrange, lagrangeP, i, j, RJ, M_i, J_bar
     PSI[7,3:7]=i.p.transpose()
     PSI[8:13,0:3]=RJ.phi_r()
     PSI[8:13,3:7]=RJ.phi_p()
+
+    # print("PSI:",PSI)
+
 
     # return jacobian (quasi-newton)
     return PSI
