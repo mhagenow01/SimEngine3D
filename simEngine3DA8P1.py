@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 
 def dynamicsAnalysis():
     ###### SIMULATION PARAMETERS #################
-    sim_length = 1.
+    sim_length = 10.
     h = 0.0001 # step for solver
 
     ###### Define the two bodies ################
@@ -143,8 +143,8 @@ def dynamicsAnalysis():
         if (printIter % 100) == 0:
 
             print("r:" , i.r.transpose(), " t:",tt)
-            # print('v:', i.r_dot.transpose())
-            # print('a:', r_i_ddot.transpose())
+            print('v:', i.r_dot.transpose())
+            print('a:', r_i_ddot.transpose())
             # g_temp = calculateResidual(r_i_ddot, p_i_ddot, lagrange, lagrangeP, i, j, RJ, M_i, J_bar_i, cr, crdot, cp, cpdot,
             #                   beta_0, h, p_norm_i, Fg)
             # print("g:" , g_temp.transpose(), " t:",tt)
@@ -168,10 +168,11 @@ def dynamicsAnalysis():
             correction = np.linalg.solve(PSI , -g)
             # print(np.linalg.norm(correction))
 
-            r_i_ddot = r_i_ddot + correction[0:3,0].reshape((3,1))
-            p_i_ddot = p_i_ddot + correction[3:7,0].reshape((4,1))
-            lagrangeP = lagrangeP + correction[7]
-            lagrange = lagrange + correction[8:13].reshape((5,1))
+            correction_scaling = 0.1
+            r_i_ddot = r_i_ddot + correction_scaling*correction[0:3,0].reshape((3,1))
+            p_i_ddot = p_i_ddot + correction_scaling*correction[3:7,0].reshape((4,1))
+            lagrangeP = lagrangeP + correction_scaling*correction[7]
+            lagrange = lagrange + correction_scaling*correction[8:13].reshape((5,1))
             iterations = iterations+1
 
         i.r = cr + (beta_0 ** 2) * (h ** 2) * r_i_ddot
