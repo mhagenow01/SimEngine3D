@@ -4,7 +4,7 @@ revolute joint double pendulum
 
 import numpy as np
 from Utilities.RigidBody import RigidBody
-from Utilities.kinematic_identities import p_from_A, A_from_p, a_dot_from_p_dot, a_ddot, G_from_p
+from Utilities.kinematic_identities import p_from_A, A_from_p, a_dot_from_p_dot, a_ddot, G_from_p, E_from_p
 from GCons.Revolute import Revolute
 from GCons.DP1 import DP1
 from GCons.P_norm import P_norm
@@ -12,8 +12,8 @@ import matplotlib.pyplot as plt
 
 def dynamicsAnalysis():
     ###### SIMULATION PARAMETERS #################
-    sim_length = 2.
-    h = 0.01 # step for solver
+    sim_length = 10.
+    h = 0.001 # step for solver
 
     ###### Define the three bodies ################
     # Body j is going to be the ground and as such doesn't have any generalized coordinates
@@ -107,11 +107,29 @@ def dynamicsAnalysis():
     # Compute the initial conditions for acceleration and the lagrange multipliers
     # by solving a linear system
 
-    # PHIs need to be properly seeded with zeros... UGH
 
     LHS = np.zeros((26,26))
     LHS[0:6,0:6]=M_total
-    LHS[0:6,16:26]=np.concatenate(RJ1.phi_r(), RJ2.phi_r(), axis=0).transpose()
+
+    # Calculate the combined PHI_partial terms
+    phi_r = np.zeros((10,6))
+    phi_r[0:5,0:3]=RJ1.phi_r()
+    phi_r[5:10,0:3]=RJ2.phi_r()[1]
+    phi_r[5:10,3:6]=RJ2.phi_r()[0]
+
+    phi_p = np.zeros((10,8))
+    phi_p[0:5,0:4]=RJ1.phi_p()
+    phi_p[5:10,0:4]=RJ2.phi_p()[1]
+    phi_p[5:10,4:8]=RJ2.phi_p()[0]
+
+    # Calculate P for P/P^T
+    P = np.zeros((2,8))
+    P[0:1,0:4]=i.p.transpose()
+    P[1:2,4:8]=k.p.transpose()
+
+    LHS[0:6,16:26]=phi_r.transpose()
+
+    # Calculate the combined inertia matrix
     Jpi = 4 * G_from_p(i.p).transpose() @ J_bar_i @ G_from_p(i.p)
     Jpk = 4 * G_from_p(k.p).transpose() @ J_bar_k @ G_from_p(k.p)
     Jp = np.zeros((8,8))
@@ -119,21 +137,28 @@ def dynamicsAnalysis():
     Jp[4:8,4:8]=Jpk
 
     LHS[6:14,6:14] = Jp
-    LHS[6:14,14:16] = i.p.reshape((4,))
-    LHS[6:14,16:26] = np.concatenate(RJ1.phi_p(),RJ2.phi_p())..transpose()
+    LHS[6:14,14:16] = P.transpose()
+    LHS[6:14,16:26] = phi_p.transpose()
 
-    LHS[7,3:7]=i.p.reshape((1,4))
+    LHS[14:16,6:14]=P
 
-    LHS[8:13,0:3]=RJ.phi_r()
-    LHS[8:13,3:7]=RJ.phi_p()
+    LHS[16:26,0:6]=phi_r
+    LHS[16:26,6:14]=phi_p
 
-    Fg = np.array([0., 0.,-9.81 * m_i]).reshape((3,1))
+    # Calculate the two gravitational forces
+    Fgi = np.array([0., 0.,-9.81 * m_i]).reshape((3,1))
+    Fgk = np.array([0., 0.,-9.81 * m_k]).reshape((3,1))
+    Fg = np.concatenate((Fgi,Fgk),axis=0)
 
-    RHS = np.zeros((13,1))
-    RHS[0:3,0] = Fg.reshape((3,))
-    RHS[3:7,0] = np.zeros((4,)) # no torques
-    RHS[7,0] = p_norm_i.gamma()
-    RHS[8:13,0]=RJ.gamma().reshape((5,))
+    RHS = np.zeros((26,1))
+    RHS[0:6,0] = Fg.reshape((6,))
+
+    RHS[6:14,0] = np.zeros((8,)) # no torques
+
+    RHS[14,0] = p_norm_i.gamma()
+    RHS[15,0] = p_norm_k.gamma()
+    RHS[16:21,0]=RJ1.gamma().reshape((5,))
+    RHS[21:26,0]=RJ2.gamma().reshape((5,))
 
     initial_conds = np.linalg.solve(LHS,RHS)
 
@@ -141,87 +166,117 @@ def dynamicsAnalysis():
     x_i = []
     y_i = []
     z_i = []
-    w_x = []
-    w_y = []
-    w_z = []
+    x_k = []
+    y_k = []
+    z_k = []
+    w_x_i = []
+    w_y_i = []
+    w_z_i = []
+    w_x_k = []
+    w_y_k = []
+    w_z_k = []
     norm_vel_constraint = []
     times = []
 
-
-    # Keep track of terms for the BDF
-    r_i_prev = np.zeros((3,1))
-    r_dot_i_prev = np.zeros((3,1))
-    p_i_prev = np.zeros((4, 1))
-    p_dot_i_prev = np.zeros((4, 1))
-
     r_i_ddot = initial_conds[0:3, 0].reshape((3, 1))
-    p_i_ddot = initial_conds[3:7, 0].reshape((4, 1))
-    lagrangeP = initial_conds[7, 0]
-    lagrange = initial_conds[8:13, 0].reshape((5, 1))
+    r_k_ddot = initial_conds[3:6, 0].reshape((3, 1))
+    p_i_ddot = initial_conds[6:10, 0].reshape((4, 1))
+    p_k_ddot = initial_conds[10:14, 0].reshape((4, 1))
+    lagrangeP = initial_conds[14:16, 0]
+    lagrange = initial_conds[16:26, 0].reshape((10, 1))
 
 
     printIter = 0
     for tt in np.arange(h,sim_length,h):
-        if (printIter % 1) == 0:
-            #(tt)
-            print("p:" , i.p.transpose(), " t:",tt)
+        if (printIter % 100) == 0:
+            print(tt)
+            # print("p:" , i.p.transpose(), " t:",tt)
         printIter = printIter+1
 
         # Step 0  - Prime the solver
         # Don't actually need to do anything in this implementation
 
-        # Need two previous sets of values for the second order BDF
-        r_i_two_prev = r_i_prev
-        r_dot_i_two_prev = r_dot_i_prev
-        p_i_two_prev = p_i_prev
-        p_dot_i_two_prev = p_dot_i_prev
 
+        # First order BDF needs previous timesteps
         r_i_prev = i.r
+        r_k_prev = k.r
         r_dot_i_prev = i.r_dot
+        r_dot_k_prev = k.r_dot
         p_i_prev = i.p
+        p_k_prev = k.p
         p_dot_i_prev = i.p_dot
-
-        # Step 1 - Compute position and velocity using BDF
+        p_dot_k_prev = k.p_dot
 
 
         # Use BDF of order 1 - compute static terms
-        cr = r_i_prev + h*r_dot_i_prev
-        crdot = r_dot_i_prev
-        cp = p_i_prev + h * p_dot_i_prev
-        cpdot = p_dot_i_prev
+        cr_i = r_i_prev + h*r_dot_i_prev
+        crdot_i = r_dot_i_prev
+        cp_i = p_i_prev + h * p_dot_i_prev
+        cpdot_i = p_dot_i_prev
+        cr_k = r_k_prev + h*r_dot_k_prev
+        crdot_k = r_dot_k_prev
+        cp_k = p_k_prev + h * p_dot_k_prev
+        cpdot_k = p_dot_k_prev
         beta_0 = 1
 
 
         # Compute non-linear residual
         iterations = 0
-        correction = np.ones((13,1)) # seed so first iteration runs
+        correction = np.ones((26,1)) # seed so first iteration runs
 
         # Calculate the jacobian for the iterative process (only done once per timestep)
+        PSI = computeJacobian(r_i_ddot, r_k_ddot, p_i_ddot, p_k_ddot, lagrange, lagrangeP, i, j, k, RJ1, RJ2, M_total,
+                              J_bar_i, J_bar_k, cr_i, crdot_i, cp_i, cpdot_i,
+                              cr_k, crdot_k, cp_k, cpdot_k, beta_0, h, p_norm_i, p_norm_k)
 
+        while iterations < 10 and np.linalg.norm(correction) > 0.01:
 
-        while iterations < 80: # and np.linalg.norm(correction) > 0.000000001:
-            PSI = computeJacobian(r_i_ddot, p_i_ddot, lagrange, lagrangeP, i, j, RJ, M_i, J_bar_i, cr, crdot, cp, cpdot,
-                                  beta_0, h, p_norm_i)
-            g = calculateResidual(r_i_ddot, p_i_ddot, lagrange, lagrangeP, i, j, RJ, M_i, J_bar_i, cr, crdot, cp, cpdot,
-                                  beta_0, h, p_norm_i, Fg)
+            # Need to fix
+            g = calculateResidual(r_i_ddot,r_k_ddot,p_i_ddot, p_k_ddot, lagrange, lagrangeP, i, j, k, RJ1, RJ2, M_total, J_bar_i,J_bar_k,
+                                  cr_i, crdot_i, cp_i, cpdot_i,cr_k, crdot_k, cp_k, cpdot_k,beta_0, h, p_norm_i, p_norm_k, Fg)
 
             correction = np.linalg.solve(PSI , -g)
+
+
             r_i_ddot = r_i_ddot + correction[0:3,0].reshape((3,1))
-            p_i_ddot = p_i_ddot + correction[3:7,0].reshape((4,1))
-            lagrangeP = lagrangeP + correction[7]
-            lagrange = lagrange + correction[8:13].reshape((5,1))
+            r_k_ddot = r_k_ddot + correction[3:6,0].reshape((3,1))
+            p_i_ddot = p_i_ddot + correction[6:10,0].reshape((4,1))
+            p_k_ddot = p_k_ddot + correction[10:14,0].reshape((4,1))
+            lagrangeP = lagrangeP + correction[14:16,0]
+            lagrange = lagrange + correction[16:26].reshape((10,1))
             iterations = iterations+1
 
-        i.r = cr + (beta_0 ** 2) * (h ** 2) * r_i_ddot
-        i.p = cp + (beta_0 ** 2) * (h ** 2) * p_i_ddot
-        i.r_dot = crdot + beta_0 * h * r_i_ddot
-        i.p_dot = cpdot + beta_0 * h * p_i_ddot
+        i.r = cr_i + (beta_0 ** 2) * (h ** 2) * r_i_ddot
+        i.p = cp_i + (beta_0 ** 2) * (h ** 2) * p_i_ddot
+        i.r_dot = crdot_i + beta_0 * h * r_i_ddot
+        i.p_dot = cpdot_i + beta_0 * h * p_i_ddot
+        k.r = cr_k + (beta_0 ** 2) * (h ** 2) * r_k_ddot
+        k.p = cp_k + (beta_0 ** 2) * (h ** 2) * p_k_ddot
+        k.r_dot = crdot_k + beta_0 * h * r_k_ddot
+        k.p_dot = cpdot_k + beta_0 * h * p_k_ddot
 
         x_i.append(i.r[0])
         y_i.append(i.r[1])
         z_i.append(i.r[2])
+        x_k.append(k.r[0])
+        y_k.append(k.r[1])
+        z_k.append(k.r[2])
+
+        w_global_i = 2 * E_from_p(i.p) @ i.p_dot
+        w_x_i.append(w_global_i[0])
+        w_y_i.append(w_global_i[1])
+        w_z_i.append(w_global_i[2])
+
+        w_global_k = 2 * E_from_p(k.p) @ k.p_dot
+        w_x_k.append(w_global_k[0])
+        w_y_k.append(w_global_k[1])
+        w_z_k.append(w_global_k[2])
+
+        vel_constraint_violation = np.concatenate((RJ2.phi_r()[1],RJ2.phi_r()[0], RJ2.phi_p()[1],RJ2.phi_p()[0]), axis=1) @\
+                                   np.concatenate((i.r_dot,k.r_dot,i.p_dot,k.p_dot),axis=0) - RJ2.nu()
+        norm_vel_constraint.append(np.linalg.norm(vel_constraint_violation))
+
         times.append(tt)
-        # print("z:",i.r[2])
 
     # Do some plotting
     plt.figure(0)
@@ -230,58 +285,149 @@ def dynamicsAnalysis():
     plt.plot(times, z_i, label='z')
     plt.title("Positions")
     plt.xlabel('Time (s)')
-    plt.ylabel('Position (m)')
+    plt.ylabel('Position of Body 1 (m)')
     plt.legend()
 
-def calculateResidual(r_i_ddot,p_i_ddot, lagrange, lagrangeP, i, j, RJ, M_i, J_bar_i, cr, crdot, cp, cpdot, beta_0, h, p_norm_i, Fg):
+    plt.figure(1)
+    plt.plot(times, x_k, label='x')
+    plt.plot(times, y_k, label='y')
+    plt.plot(times, z_k, label='z')
+    plt.title("Positions")
+    plt.xlabel('Time (s)')
+    plt.ylabel('Position of Body 2 (m)')
+    plt.legend()
+
+    plt.figure(2)
+    plt.plot(times, w_x_i, label='x')
+    plt.plot(times, w_y_i, label='y')
+    plt.plot(times, w_z_i, label='z')
+    plt.title("Angular Velocity of Body 1")
+    plt.xlabel('Time (s)')
+    plt.ylabel('Angular Velocity (rad/s)')
+    plt.legend()
+
+    plt.figure(3)
+    plt.plot(times, w_x_k, label='x')
+    plt.plot(times, w_y_k, label='y')
+    plt.plot(times, w_z_k, label='z')
+    plt.title("Angular Velocity of Body 2")
+    plt.xlabel('Time (s)')
+    plt.ylabel('Angular Velocity (rad/s)')
+    plt.legend()
+
+    plt.figure(2)
+    plt.plot(times, norm_vel_constraint)
+    plt.title("Velocity Constraint Violation")
+    plt.xlabel('Time (s)')
+    plt.ylabel('||PHI_Q*q_dot - nu||')
+
+    plt.show()
+
+def calculateResidual(r_i_ddot,r_k_ddot,p_i_ddot, p_k_ddot, lagrange, lagrangeP, i, j, k, RJ1, RJ2, M_total, J_bar_i,J_bar_k,
+                                  cr_i, crdot_i, cp_i, cpdot_i,cr_k, crdot_k, cp_k, cpdot_k,beta_0, h, p_norm_i, p_norm_k, Fg):
     # gets the residual aka g(x...)
 
     # update the body first
-    i.r = cr + (beta_0 **2) * (h ** 2) * r_i_ddot
-    i.p = cp + (beta_0 **2) * (h ** 2) * p_i_ddot
-    i.r_dot = crdot + beta_0*h * r_i_ddot
-    i.p_dot = cpdot + beta_0 * h * p_i_ddot
+    i.r = cr_i + beta_0 * (h ** 2) * r_i_ddot
+    i.p = cp_i + beta_0 * (h ** 2) * p_i_ddot
+    i.r_dot = crdot_i + beta_0 * h * r_i_ddot
+    i.p_dot = cpdot_i + beta_0 * h * p_i_ddot
+    k.r = cr_k + beta_0 * (h ** 2) * r_k_ddot
+    k.p = cp_k + beta_0 * (h ** 2) * p_k_ddot
+    k.r_dot = crdot_k + beta_0 * h * r_k_ddot
+    k.p_dot = cpdot_k + beta_0 * h * p_k_ddot
 
     # update the constraints
-    RJ.update(i,j)
+    RJ1.update(i, j)
+    RJ2.update(k, i)
     p_norm_i.update(i)
+    p_norm_k.update(k)
+
+    # Calculate the combined PHI_partial terms
+    phi_r = np.zeros((10, 6))
+    phi_r[0:5, 0:3] = RJ1.phi_r()
+    phi_r[5:10, 0:3] = RJ2.phi_r()[1]
+    phi_r[5:10, 3:6] = RJ2.phi_r()[0]
+
+    phi_p = np.zeros((10, 8))
+    phi_p[0:5, 0:4] = RJ1.phi_p()
+    phi_p[5:10, 0:4] = RJ2.phi_p()[1]
+    phi_p[5:10, 4:8] = RJ2.phi_p()[0]
+
+    # Calculate P for P/P^T
+    P = np.zeros((2, 8))
+    P[0:1, 0:4] = i.p.transpose()
+    P[1:2, 4:8] = k.p.transpose()
 
     # form the g matrix (note: no generalized torques)
-    g = np.zeros((13,1))
-    g[0:3,0]= (M_i @ r_i_ddot + RJ.phi_r().transpose() @ lagrange-Fg).reshape((3,))
+    g = np.zeros((26,1))
+    g[0:6,0]= (M_total @ np.concatenate((r_i_ddot,r_k_ddot),axis=0) + phi_r.transpose() @ lagrange-Fg).reshape((6,))
 
-    Jp = 4 * G_from_p(i.p).transpose() @ J_bar_i @ G_from_p(i.p)
-    g[3:7,0] = (Jp @ p_i_ddot + RJ.phi_p().transpose() @ lagrange + i.p.reshape((4,1)) * lagrangeP).reshape((4,))
-    g[7]=(1/(beta_0 **2 * h **2)) * p_norm_i.phi()
+    Jpi = 4 * G_from_p(i.p).transpose() @ J_bar_i @ G_from_p(i.p)
+    Jpk = 4 * G_from_p(k.p).transpose() @ J_bar_k @ G_from_p(k.p)
+    Jp = np.zeros((8, 8))
+    Jp[0:4, 0:4] = Jpi
+    Jp[4:8, 4:8] = Jpk
 
-    g[8:13,0]=((1/(beta_0 **2 * h **2)) * RJ.phi()).reshape((5,))
+    g[6:14,0] = (Jp @ np.concatenate((p_i_ddot,p_k_ddot),axis=0) + phi_p.transpose() @ lagrange + P.transpose() @ lagrangeP.reshape((2,1))).reshape((8,))
+    g[14:16,0]=((1/(beta_0 **2 * h **2)) * np.concatenate((p_norm_i.phi(),p_norm_k.phi()),axis=0)).reshape((2,))
+
+    g[16:26,0]=((1/(beta_0 **2 * h **2)) * np.concatenate((RJ1.phi(),RJ2.phi()),axis=0)).reshape((10,))
     return g
 
-def computeJacobian(r_i_ddot,p_i_ddot, lagrange, lagrangeP, i, j, RJ, M_i, J_bar_i, cr, crdot, cp, cpdot, beta_0, h, p_norm_i):
+def computeJacobian(r_i_ddot,r_k_ddot, p_i_ddot,p_k_ddot, lagrange, lagrangeP, i, j,k, RJ1,RJ2, M_total, J_bar_i,J_bar_k, cr_i, crdot_i, cp_i, cpdot_i,
+                                  cr_k,crdot_k,cp_k,cpdot_k,beta_0, h, p_norm_i,p_norm_k):
     # Quasi-Newton - choosing to not compute all h^2 terms
     # update the body first
-    i.r = cr + beta_0 * (h ** 2) * r_i_ddot
-    i.p = cp + beta_0 * (h ** 2) * p_i_ddot
-    i.r_dot = crdot + beta_0 * h * r_i_ddot
-    i.p_dot = cpdot + beta_0 * h * p_i_ddot
+    i.r = cr_i + beta_0 * (h ** 2) * r_i_ddot
+    i.p = cp_i + beta_0 * (h ** 2) * p_i_ddot
+    i.r_dot = crdot_i + beta_0 * h * r_i_ddot
+    i.p_dot = cpdot_i + beta_0 * h * p_i_ddot
+    k.r = cr_k + beta_0 * (h ** 2) * r_k_ddot
+    k.p = cp_k + beta_0 * (h ** 2) * p_k_ddot
+    k.r_dot = crdot_k + beta_0 * h * r_k_ddot
+    k.p_dot = cpdot_k + beta_0 * h * p_k_ddot
 
     # update the constraints
-    RJ.update(i, j)
+    RJ1.update(i, j)
+    RJ2.update(k, i)
     p_norm_i.update(i)
+    p_norm_k.update(k)
 
-    Jp = 4 * G_from_p(i.p).transpose() @ J_bar_i @ G_from_p(i.p)
+    PSI = np.zeros((26, 26))
+    PSI[0:6, 0:6] = M_total
 
-    # Build the jacobian
-    PSI = np.zeros((13,13))
-    PSI[0:3,0:3]=M_i
-    PSI[0:3,8:13]=RJ.phi_r().transpose()
-    PSI[3:7,3:7]=Jp
-    PSI[3:7,7]=i.p.reshape((4,))
-    PSI[3:7,8:13]=RJ.phi_p().transpose()
-    PSI[7,3:7]=i.p.transpose()
-    PSI[8:13,0:3]=RJ.phi_r()
-    PSI[8:13,3:7]=RJ.phi_p()
+    # Calculate the combined PHI_partial terms
+    phi_r = np.zeros((10, 6))
+    phi_r[0:5, 0:3] = RJ1.phi_r()
+    phi_r[5:10, 0:3] = RJ2.phi_r()[1]
+    phi_r[5:10, 3:6] = RJ2.phi_r()[0]
 
+    phi_p = np.zeros((10, 8))
+    phi_p[0:5, 0:4] = RJ1.phi_p()
+    phi_p[5:10, 0:4] = RJ2.phi_p()[1]
+    phi_p[5:10, 4:8] = RJ2.phi_p()[0]
+
+    # Calculate P for P/P^T
+    P = np.zeros((2, 8))
+    P[0:1, 0:4] = i.p.transpose()
+    P[1:2, 4:8] = k.p.transpose()
+
+    PSI[0:6, 16:26] = phi_r.transpose()
+    Jpi = 4 * G_from_p(i.p).transpose() @ J_bar_i @ G_from_p(i.p)
+    Jpk = 4 * G_from_p(k.p).transpose() @ J_bar_k @ G_from_p(k.p)
+    Jp = np.zeros((8, 8))
+    Jp[0:4, 0:4] = Jpi
+    Jp[4:8, 4:8] = Jpk
+
+    PSI[6:14, 6:14] = Jp
+    PSI[6:14, 14:16] = P.transpose()
+    PSI[6:14, 16:26] = phi_p.transpose()
+
+    PSI[14:16, 6:14] = P
+
+    PSI[16:26, 0:6] = phi_r
+    PSI[16:26, 6:14] = phi_p
     # return jacobian (quasi-newton)
     return PSI
 

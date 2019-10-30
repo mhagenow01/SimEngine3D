@@ -60,3 +60,14 @@ def G_from_p(p):
 
     return G
 
+def E_from_p(p):
+    p.reshape((4,1))
+    e0 = p[0]
+    e = np.array(p[1:]).reshape((3, 1))
+
+    E = np.zeros((3, 4))
+    E[:, 0] = -e.reshape((3,))
+    E[:, 1:] = a_tilde(e)+e0*np.eye(3)
+
+    return E
+

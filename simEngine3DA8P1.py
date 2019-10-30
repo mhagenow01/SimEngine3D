@@ -4,7 +4,7 @@ revolute joint pendulum
 
 import numpy as np
 from Utilities.RigidBody import RigidBody
-from Utilities.kinematic_identities import p_from_A, A_from_p, a_dot_from_p_dot, a_ddot, G_from_p
+from Utilities.kinematic_identities import p_from_A, A_from_p, a_dot_from_p_dot, a_ddot, G_from_p, E_from_p
 from GCons.Revolute import Revolute
 from GCons.DP1 import DP1
 from GCons.P_norm import P_norm
@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 
 def dynamicsAnalysis():
     ###### SIMULATION PARAMETERS #################
-    sim_length = 2.
+    sim_length = 10.
     h = 0.001 # step for solver
 
     ###### Define the two bodies ################
@@ -87,6 +87,9 @@ def dynamicsAnalysis():
     w_x = []
     w_y = []
     w_z = []
+    tor_x = []
+    tor_y = []
+    tor_z = []
     norm_vel_constraint = []
     times = []
 
@@ -181,22 +184,63 @@ def dynamicsAnalysis():
         i.r_dot = crdot + beta_0 * h * r_i_ddot
         i.p_dot = cpdot + beta_0 * h * p_i_ddot
 
-        # exit()
+
         x_i.append(i.r[0])
         y_i.append(i.r[1])
         z_i.append(i.r[2])
+
+        w_global = 2 * E_from_p(i.p) @ i.p_dot
+        w_x.append(w_global[0])
+        w_y.append(w_global[1])
+        w_z.append(w_global[2])
+
+        vel_constraint_violation = np.concatenate((RJ.phi_r(),RJ.phi_p()),axis=1) @ np.concatenate((i.r_dot,i.p_dot),axis=0)-RJ.nu()
+        norm_vel_constraint.append(np.linalg.norm(vel_constraint_violation))
+
+        req_torque_global = -0.5 * E_from_p(i.p) @ RJ.phi_p().reshape((5, 4)).transpose() @ lagrange
+        tor_x.append(req_torque_global[0])
+        tor_y.append(req_torque_global[0])
+        tor_z.append(req_torque_global[0])
+
         times.append(tt)
         # print("z:",i.r[2])
 
-    # Do some plotting
+    # Plotting of Positions and Angular Velocities and Constraint Violations
     plt.figure(0)
     plt.plot(times, x_i, label='x')
     plt.plot(times, y_i, label='y')
     plt.plot(times, z_i, label='z')
-    plt.title("Positions")
+    plt.title("Position of Pendulum")
     plt.xlabel('Time (s)')
     plt.ylabel('Position (m)')
     plt.legend()
+
+    plt.figure(1)
+    plt.plot(times, w_x, label='x')
+    plt.plot(times, w_y, label='y')
+    plt.plot(times, w_z, label='z')
+    plt.title("Angular Velocity of Pendulum")
+    plt.xlabel('Time (s)')
+    plt.ylabel('Angular Velocity (rad/s)')
+    plt.legend()
+
+    plt.figure(2)
+    plt.plot(times, norm_vel_constraint)
+    plt.title("Velocity Constraint Violation")
+    plt.xlabel('Time (s)')
+    plt.ylabel('||PHI_Q*q_dot - nu||')
+
+    plt.figure(3)
+    plt.plot(times, tor_x, label='x')
+    plt.plot(times, tor_y, label='y')
+    plt.plot(times, tor_z, label='z')
+    plt.title("Body 1 Torque")
+    plt.xlabel('Time (s)')
+    plt.ylabel('Torque (Nm)')
+    plt.legend()
+
+
+    plt.show()
 
 def calculateResidual(r_i_ddot,p_i_ddot, lagrange, lagrangeP, i, j, RJ, M_i, J_bar_i, cr, crdot, cp, cpdot, beta_0, h, p_norm_i, Fg):
     # gets the residual aka g(x...)
