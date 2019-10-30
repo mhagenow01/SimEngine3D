@@ -52,15 +52,16 @@ def dynamicsAnalysis():
     p_k_initial = p_from_A(A_k_initial)
     p_dot_k = np.array([0., 0., 0., 0.]).reshape((4, 1))  # orientation is not initially changing
 
+
     # mass matrix for body i - assuming same cross section
     m_k = np.power(0.05, 2) * 2 * 7800  # half the length of body i
     M_k = m_k * np.eye(3)
 
     # Inertia matrix
     J_bar_k = np.zeros((3, 3))
-    J_bar_k[0, 0] = (1 / 12) * m_i * (np.power(0.05, 2) + np.power(0.05, 2))
-    J_bar_k[1, 1] = (1 / 12) * m_i * (np.power(0.05, 2) + np.power(2, 2))
-    J_bar_k[2, 2] = (1 / 12) * m_i * (np.power(0.05, 2) + np.power(2, 2))
+    J_bar_k[0, 0] = (1 / 12) * m_k * (np.power(0.05, 2) + np.power(0.05, 2))
+    J_bar_k[1, 1] = (1 / 12) * m_k * (np.power(0.05, 2) + np.power(2, 2))
+    J_bar_k[2, 2] = (1 / 12) * m_k * (np.power(0.05, 2) + np.power(2, 2))
 
     k = RigidBody(r_k, p_k_initial, r_dot_k, p_dot_k, m_k)  # velocities as defaults
 
@@ -146,8 +147,8 @@ def dynamicsAnalysis():
     LHS[16:26,6:14]=phi_p
 
     # Calculate the two gravitational forces
-    Fgi = np.array([0., 0.,-9.81 * m_i]).reshape((3,1))
-    Fgk = np.array([0., 0.,-9.81 * m_k]).reshape((3,1))
+    Fgi = np.array([0., 0. ,-9.81 * m_i]).reshape((3,1))
+    Fgk = np.array([0., 0. ,-9.81 * m_k]).reshape((3,1))
     Fg = np.concatenate((Fgi,Fgk),axis=0)
 
     RHS = np.zeros((26,1))
@@ -225,18 +226,18 @@ def dynamicsAnalysis():
         correction = np.ones((26,1)) # seed so first iteration runs
 
         # Calculate the jacobian for the iterative process (only done once per timestep)
-        PSI = computeJacobian(r_i_ddot, r_k_ddot, p_i_ddot, p_k_ddot, lagrange, lagrangeP, i, j, k, RJ1, RJ2, M_total,
-                              J_bar_i, J_bar_k, cr_i, crdot_i, cp_i, cpdot_i,
-                              cr_k, crdot_k, cp_k, cpdot_k, beta_0, h, p_norm_i, p_norm_k)
 
-        while iterations < 10 and np.linalg.norm(correction) > 0.01:
 
-            # Need to fix
+        while iterations < 10 and np.linalg.norm(correction) > 0.001:
+            PSI = computeJacobian(r_i_ddot, r_k_ddot, p_i_ddot, p_k_ddot, lagrange, lagrangeP, i, j, k, RJ1, RJ2,
+                                  M_total,
+                                  J_bar_i, J_bar_k, cr_i, crdot_i, cp_i, cpdot_i,
+                                  cr_k, crdot_k, cp_k, cpdot_k, beta_0, h, p_norm_i, p_norm_k)
+
             g = calculateResidual(r_i_ddot,r_k_ddot,p_i_ddot, p_k_ddot, lagrange, lagrangeP, i, j, k, RJ1, RJ2, M_total, J_bar_i,J_bar_k,
                                   cr_i, crdot_i, cp_i, cpdot_i,cr_k, crdot_k, cp_k, cpdot_k,beta_0, h, p_norm_i, p_norm_k, Fg)
 
             correction = np.linalg.solve(PSI , -g)
-
 
             r_i_ddot = r_i_ddot + correction[0:3,0].reshape((3,1))
             r_k_ddot = r_k_ddot + correction[3:6,0].reshape((3,1))
@@ -315,7 +316,7 @@ def dynamicsAnalysis():
     plt.ylabel('Angular Velocity (rad/s)')
     plt.legend()
 
-    plt.figure(2)
+    plt.figure(4)
     plt.plot(times, norm_vel_constraint)
     plt.title("Velocity Constraint Violation")
     plt.xlabel('Time (s)')
@@ -425,7 +426,6 @@ def computeJacobian(r_i_ddot,r_k_ddot, p_i_ddot,p_k_ddot, lagrange, lagrangeP, i
     PSI[6:14, 16:26] = phi_p.transpose()
 
     PSI[14:16, 6:14] = P
-
     PSI[16:26, 0:6] = phi_r
     PSI[16:26, 6:14] = phi_p
     # return jacobian (quasi-newton)

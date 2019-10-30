@@ -23,7 +23,7 @@ class P_norm:
 
     def gamma(self):
         # Returns the RHS of the acceleration expression (scalar)
-        return (-2*self.i.p_dot.reshape((1, 4)) @ self.i.p_dot.reshape((4, 1))).reshape((1, 1))
+        return (-self.i.p_dot.reshape((1, 4)) @ self.i.p_dot.reshape((4, 1))).reshape((1, 1))
 
     def phi_r(self):
         # Returns the Jacobian of the constraint equation with respect to position. Tuple with

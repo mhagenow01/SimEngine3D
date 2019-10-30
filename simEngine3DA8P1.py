@@ -291,8 +291,6 @@ def computeJacobian(r_i_ddot,p_i_ddot, lagrange, lagrangeP, i, j, RJ, M_i, J_bar
     PSI[8:13,0:3]=RJ.phi_r()
     PSI[8:13,3:7]=RJ.phi_p()
 
-    # print("PSI:",PSI)
-
 
     # return jacobian (quasi-newton)
     return PSI
