@@ -29,3 +29,8 @@ as well as the overall reaction forces for body i (not required). I have provide
 backwards Euler for the given IVP (note the system does not evolve in time from the given starting configuration). I have provided a file simEngine3DA7P3.py
 which performs the Backwards Euler vs BDF (4th order) Convergence Analysis. It will plot the linear and log-log convergence plots
 as well as calculate the slopes on the log-log plot.
+
+## HW 8 - Dynamics Analysis
+I have provided a file simEngine3DA8P1.py which performs a dynamic analysis and creates plots for a single revolute pendulum. You can set
+the timestep and simulation length at the beginning of the file. I have provided a file simEngine3DA8P2.py which performs a dynamic analysis and creates plots for a double revolute pendulum. You can set
+the timestep and simulation length at the beginning of the file.

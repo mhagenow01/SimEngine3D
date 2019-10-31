@@ -9,11 +9,14 @@ from GCons.Revolute import Revolute
 from GCons.DP1 import DP1
 from GCons.P_norm import P_norm
 import matplotlib.pyplot as plt
+import time
 
 def dynamicsAnalysis():
     ###### SIMULATION PARAMETERS #################
     sim_length = 10.
-    h = 0.001 # step for solver
+    h = 0.0001 # step for solver
+
+    start = time.time()
 
     ###### Define the three bodies ################
     # Body j is going to be the ground and as such doesn't have any generalized coordinates
@@ -107,7 +110,6 @@ def dynamicsAnalysis():
 
     # Compute the initial conditions for acceleration and the lagrange multipliers
     # by solving a linear system
-
 
     LHS = np.zeros((26,26))
     LHS[0:6,0:6]=M_total
@@ -226,13 +228,13 @@ def dynamicsAnalysis():
         correction = np.ones((26,1)) # seed so first iteration runs
 
         # Calculate the jacobian for the iterative process (only done once per timestep)
+        PSI = computeJacobian(r_i_ddot, r_k_ddot, p_i_ddot, p_k_ddot, lagrange, lagrangeP, i, j, k, RJ1, RJ2,
+                              M_total,
+                              J_bar_i, J_bar_k, cr_i, crdot_i, cp_i, cpdot_i,
+                              cr_k, crdot_k, cp_k, cpdot_k, beta_0, h, p_norm_i, p_norm_k)
 
+        while iterations < 10 and np.linalg.norm(correction) > 0.00001:
 
-        while iterations < 10 and np.linalg.norm(correction) > 0.001:
-            PSI = computeJacobian(r_i_ddot, r_k_ddot, p_i_ddot, p_k_ddot, lagrange, lagrangeP, i, j, k, RJ1, RJ2,
-                                  M_total,
-                                  J_bar_i, J_bar_k, cr_i, crdot_i, cp_i, cpdot_i,
-                                  cr_k, crdot_k, cp_k, cpdot_k, beta_0, h, p_norm_i, p_norm_k)
 
             g = calculateResidual(r_i_ddot,r_k_ddot,p_i_ddot, p_k_ddot, lagrange, lagrangeP, i, j, k, RJ1, RJ2, M_total, J_bar_i,J_bar_k,
                                   cr_i, crdot_i, cp_i, cpdot_i,cr_k, crdot_k, cp_k, cpdot_k,beta_0, h, p_norm_i, p_norm_k, Fg)
@@ -247,6 +249,7 @@ def dynamicsAnalysis():
             lagrange = lagrange + correction[16:26].reshape((10,1))
             iterations = iterations+1
 
+        # Final update
         i.r = cr_i + (beta_0 ** 2) * (h ** 2) * r_i_ddot
         i.p = cp_i + (beta_0 ** 2) * (h ** 2) * p_i_ddot
         i.r_dot = crdot_i + beta_0 * h * r_i_ddot
@@ -256,6 +259,7 @@ def dynamicsAnalysis():
         k.r_dot = crdot_k + beta_0 * h * r_k_ddot
         k.p_dot = cpdot_k + beta_0 * h * p_k_ddot
 
+        # Store required data for plots
         x_i.append(i.r[0])
         y_i.append(i.r[1])
         z_i.append(i.r[2])
@@ -279,23 +283,23 @@ def dynamicsAnalysis():
 
         times.append(tt)
 
-    # Do some plotting
+    # Create the plots
     plt.figure(0)
     plt.plot(times, x_i, label='x')
     plt.plot(times, y_i, label='y')
     plt.plot(times, z_i, label='z')
-    plt.title("Positions")
+    plt.title("Position of Body 1)")
     plt.xlabel('Time (s)')
-    plt.ylabel('Position of Body 1 (m)')
+    plt.ylabel('Position (m)')
     plt.legend()
 
     plt.figure(1)
     plt.plot(times, x_k, label='x')
     plt.plot(times, y_k, label='y')
     plt.plot(times, z_k, label='z')
-    plt.title("Positions")
+    plt.title("Position of Body 2)")
     plt.xlabel('Time (s)')
-    plt.ylabel('Position of Body 2 (m)')
+    plt.ylabel('Position (m)')
     plt.legend()
 
     plt.figure(2)
@@ -321,6 +325,9 @@ def dynamicsAnalysis():
     plt.title("Velocity Constraint Violation")
     plt.xlabel('Time (s)')
     plt.ylabel('||PHI_Q*q_dot - nu||')
+
+    end = time.time()
+    print("Time Elapsed: ", end - start, " seconds")
 
     plt.show()
 

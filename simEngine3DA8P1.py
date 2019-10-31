@@ -9,11 +9,14 @@ from GCons.Revolute import Revolute
 from GCons.DP1 import DP1
 from GCons.P_norm import P_norm
 import matplotlib.pyplot as plt
+import time
 
 def dynamicsAnalysis():
     ###### SIMULATION PARAMETERS #################
     sim_length = 10.
     h = 0.001 # step for solver
+
+    start = time.time()
 
     ###### Define the two bodies ################
     # Body j is going to be the ground and as such doesn't have any generalized coordinates
@@ -170,13 +173,12 @@ def dynamicsAnalysis():
                                   beta_0, h, p_norm_i, Fg)
 
             correction = np.linalg.solve(PSI , -g)
-            # print(np.linalg.norm(correction))
 
-            correction_scaling = 1
-            r_i_ddot = r_i_ddot + correction_scaling*correction[0:3,0].reshape((3,1))
-            p_i_ddot = p_i_ddot + correction_scaling*correction[3:7,0].reshape((4,1))
-            lagrangeP = lagrangeP + correction_scaling*correction[7]
-            lagrange = lagrange + correction_scaling*correction[8:13].reshape((5,1))
+
+            r_i_ddot = r_i_ddot + correction[0:3,0].reshape((3,1))
+            p_i_ddot = p_i_ddot + correction[3:7,0].reshape((4,1))
+            lagrangeP = lagrangeP + correction[7]
+            lagrange = lagrange + correction[8:13].reshape((5,1))
             iterations = iterations+1
 
         i.r = cr + (beta_0 ** 2) * (h ** 2) * r_i_ddot
@@ -199,8 +201,8 @@ def dynamicsAnalysis():
 
         req_torque_global = -0.5 * E_from_p(i.p) @ RJ.phi_p().reshape((5, 4)).transpose() @ lagrange
         tor_x.append(req_torque_global[0])
-        tor_y.append(req_torque_global[0])
-        tor_z.append(req_torque_global[0])
+        tor_y.append(req_torque_global[1])
+        tor_z.append(req_torque_global[2])
 
         times.append(tt)
         # print("z:",i.r[2])
@@ -239,6 +241,8 @@ def dynamicsAnalysis():
     plt.ylabel('Torque (Nm)')
     plt.legend()
 
+    end = time.time()
+    print("Time Elapsed: ", end - start, " seconds")
 
     plt.show()
 
