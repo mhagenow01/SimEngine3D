@@ -14,7 +14,7 @@ def finiteDifference():
     dphidx = 0
 
     # Define the discretized points, x
-    n = 20  # number of equidistant elements
+    n = 1000  # number of equidistant elements
     domain_start = 0
     domain_end = 1
     x = np.linspace(domain_start,domain_end,n+1)
@@ -25,8 +25,8 @@ def finiteDifference():
     A = np.zeros((n+1,n+1))
 
     x_plus_1_coeff = ux/(2*h)-D/(h ** 2)
-    x_coeff = -ux/(2*h)+2*D/(h ** 2)
-    x_minus_1_coeff = - D / (h ** 2)
+    x_coeff = 2*D / (h ** 2)
+    x_minus_1_coeff = -ux / (2 * h) - D / (h ** 2)
 
     A[0,0]=1
 

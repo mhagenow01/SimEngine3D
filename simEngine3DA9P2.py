@@ -15,7 +15,7 @@ def finiteVolume():
     dphidx = 0
 
     # Define the discretized points, x
-    n = 10  # number of equidistant elements
+    n = 1000  # number of equidistant elements
     domain_start = 0
     domain_end = 1
     h = 1 / n
@@ -25,16 +25,17 @@ def finiteVolume():
 
     print("X:", x)
 
-
     A = np.zeros((n,n))
 
-    x_plus_1_coeff = -ux*fx-D/h
-    x_coeff = -2*ux*fx+2*D/h
-    x_minus_1_coeff = -ux*fx-D/h
+    # Turns out that these are the same coefficients as the finite difference for this problem
+    # However, in this case fx=0.5 instead of dividing by two. Also the signs are the opposite
+    x_plus_1_coeff = -ux * fx/h + D / (h ** 2)
+    x_coeff = -2 * D / (h ** 2)
+    x_minus_1_coeff = ux * fx / h + D / (h ** 2)
 
     # Dirichlet boundary condition
-    A[0,0]=-ux*fx+3*D/h
-    A[0,1]=-ux*fx-D/h
+    A[0,0]= -ux * fx / h -2 * D / (h ** 2)
+    A[0,1]= -ux * fx / h + D / (h ** 2) # unchanged
 
     for ii in range(1,n-1):
         #Each loop covers a row of coefficients
@@ -43,8 +44,8 @@ def finiteVolume():
         A[0+ii,-1+ii]=x_minus_1_coeff
 
     # Neumann boundary condition
-    A[n-1, n-1] = -3*ux*fx+D/h
-    A[n-1, n-2] =  -ux*fx-D/h
+    A[n-1, n-1] =  -ux *fx/h - D / (h ** 2)
+    A[n-1, n-2] =  ux*fx / h + D / (h ** 2) # unchanged
 
     b = np.zeros((n,1))
     b[0:n,0]=-s
