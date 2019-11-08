@@ -24,6 +24,7 @@ def finiteDifference():
 
     A = np.zeros((n+1,n+1))
 
+    #Coefficients for advective and diffusive terms
     x_plus_1_coeff = ux/(2*h)-D/(h ** 2)
     x_coeff = 2*D / (h ** 2)
     x_minus_1_coeff = -ux / (2 * h) - D / (h ** 2)

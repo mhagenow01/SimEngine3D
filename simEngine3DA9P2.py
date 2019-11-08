@@ -1,4 +1,4 @@
-""" Peforms a steady-state finite difference
+""" Peforms a steady-state finite volume
 method for a 1D problem
 """
 

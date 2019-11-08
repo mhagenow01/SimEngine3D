@@ -34,3 +34,9 @@ as well as calculate the slopes on the log-log plot.
 I have provided a file simEngine3DA8P1.py which performs a dynamic analysis and creates plots for a single revolute pendulum. You can set
 the timestep and simulation length at the beginning of the file. I have provided a file simEngine3DA8P2.py which performs a dynamic analysis and creates plots for a double revolute pendulum. You can set
 the timestep and simulation length at the beginning of the file.
+
+## HW 9 - CFD Track Finite Difference/Finite Volume
+I have provided a file simEngine3DA9P1.py which implements the finite difference method for the 1D problem.
+I have provided a file simEngine3DA9P2.py which implements the finite volume method for the 1D problem.
+Both methods are set up for n=1000 points (finite difference is n+1). Both methods produce the same result
+and the first method was validated against the suggested analytical solutions.
